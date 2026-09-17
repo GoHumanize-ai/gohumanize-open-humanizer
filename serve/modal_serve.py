@@ -38,6 +38,8 @@ SYSTEM_PROMPT = (
 
 def _dotenv(path: Path, keys: tuple[str, ...]) -> dict[str, str]:
     out: dict[str, str] = {}
+    if not path.exists():  # inside the Modal container the module is re-imported without .env
+        return out
     for line in path.read_text().splitlines():
         if "=" in line and not line.lstrip().startswith("#"):
             k, v = line.split("=", 1)

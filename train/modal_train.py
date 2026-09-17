@@ -49,6 +49,8 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
 def _dotenv(path: Path, keys: tuple[str, ...]) -> dict[str, str]:
     """Read selected KEY=value lines from .env without extra dependencies."""
     out: dict[str, str] = {}
+    if not path.exists():  # inside the Modal container the module is re-imported without .env
+        return out
     for line in path.read_text().splitlines():
         if "=" in line and not line.lstrip().startswith("#"):
             k, v = line.split("=", 1)
