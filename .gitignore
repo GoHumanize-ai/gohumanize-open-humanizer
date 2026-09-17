@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+data/gutenberg_cache/
+data/*.jsonl
+!data/samples_preview.jsonl
+__pycache__/
+*.pyc
+.venv/
+wandb/
+outputs/
+*.gguf
+.DS_Store
