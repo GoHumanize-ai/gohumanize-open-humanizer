@@ -92,12 +92,14 @@ def train(
     import json
     import os
 
+    # Unsloth patches transformers/TRL at import time and must come first.
+    from unsloth import FastLanguageModel  # noqa: I001
+    from unsloth.chat_templates import train_on_responses_only
+
     import torch
     import wandb
     from datasets import load_dataset
     from trl import SFTConfig, SFTTrainer
-    from unsloth import FastLanguageModel
-    from unsloth.chat_templates import train_on_responses_only
 
     os.environ["WANDB_PROJECT"] = "gohumanize-open-humanizer"
     wandb.login(key=os.environ["WANDB_API_KEY"])
