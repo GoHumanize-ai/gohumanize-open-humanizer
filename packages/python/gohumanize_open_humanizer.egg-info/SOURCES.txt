@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+gohumanize_open_humanizer/__init__.py
+gohumanize_open_humanizer.egg-info/PKG-INFO
+gohumanize_open_humanizer.egg-info/SOURCES.txt
+gohumanize_open_humanizer.egg-info/dependency_links.txt
+gohumanize_open_humanizer.egg-info/entry_points.txt
+gohumanize_open_humanizer.egg-info/top_level.txt

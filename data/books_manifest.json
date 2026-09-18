@@ -1,0 +1,430 @@
+[
+  {
+    "gutenberg_id": 1342,
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "category": "fiction",
+    "candidates": 776,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 158,
+    "title": "Emma",
+    "author": "Jane Austen",
+    "category": "fiction",
+    "candidates": 901,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 11,
+    "title": "Alice's Adventures in Wonderland",
+    "author": "Lewis Carroll",
+    "category": "fiction",
+    "candidates": 154,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 1661,
+    "title": "The Adventures of Sherlock Holmes",
+    "author": "Arthur Conan Doyle",
+    "category": "fiction",
+    "candidates": 630,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 98,
+    "title": "A Tale of Two Cities",
+    "author": "Charles Dickens",
+    "category": "fiction",
+    "candidates": 893,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 1400,
+    "title": "Great Expectations",
+    "author": "Charles Dickens",
+    "category": "fiction",
+    "candidates": 1122,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 730,
+    "title": "Oliver Twist",
+    "author": "Charles Dickens",
+    "category": "fiction",
+    "candidates": 966,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 2701,
+    "title": "Moby Dick; Or, The Whale",
+    "author": "Herman Melville",
+    "category": "fiction",
+    "candidates": 1098,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 74,
+    "title": "The Adventures of Tom Sawyer, Complete",
+    "author": "Mark Twain",
+    "category": "fiction",
+    "candidates": 335,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 76,
+    "title": "Adventures of Huckleberry Finn",
+    "author": "Mark Twain",
+    "category": "fiction",
+    "candidates": 473,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 345,
+    "title": "Dracula",
+    "author": "Bram Stoker",
+    "category": "fiction",
+    "candidates": 682,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 84,
+    "title": "Frankenstein",
+    "author": "Mary Wollstonecraft Shelley",
+    "category": "fiction",
+    "candidates": 476,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 768,
+    "title": "Wuthering Heights",
+    "author": "Emily Brontë",
+    "category": "fiction",
+    "candidates": 644,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 1260,
+    "title": "Jane Eyre",
+    "author": "Charlotte Bronte",
+    "category": "fiction",
+    "candidates": 1122,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 145,
+    "title": "Middlemarch",
+    "author": "George Eliot",
+    "category": "fiction",
+    "candidates": 1821,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 16,
+    "title": "Peter Pan",
+    "author": "J. M. Barrie",
+    "category": "fiction",
+    "candidates": 300,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 25344,
+    "title": "The Scarlet Letter",
+    "author": "Nathaniel Hawthorne",
+    "category": "fiction",
+    "candidates": 327,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 219,
+    "title": "Heart of Darkness",
+    "author": "Joseph Conrad",
+    "category": "fiction",
+    "candidates": 94,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 36,
+    "title": "The War of the Worlds",
+    "author": "H. G. Wells",
+    "category": "fiction",
+    "candidates": 407,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 35,
+    "title": "The Time Machine",
+    "author": "H. G. Wells",
+    "category": "fiction",
+    "candidates": 186,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 43,
+    "title": "The strange case of Dr. Jekyll and Mr. Hyde",
+    "author": "Robert Louis Stevenson",
+    "category": "fiction",
+    "candidates": 109,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 120,
+    "title": "Treasure Island",
+    "author": "Robert Louis Stevenson",
+    "category": "fiction",
+    "candidates": 394,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 174,
+    "title": "The Picture of Dorian Gray",
+    "author": "Oscar Wilde",
+    "category": "fiction",
+    "candidates": 420,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 2814,
+    "title": "Dubliners",
+    "author": "James Joyce",
+    "category": "fiction",
+    "candidates": 376,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 64317,
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "category": "fiction",
+    "candidates": 318,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 55,
+    "title": "The Wonderful Wizard of Oz",
+    "author": "L. Frank Baum",
+    "category": "fiction",
+    "candidates": 279,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 113,
+    "title": "The Secret Garden",
+    "author": "Frances Hodgson Burnett",
+    "category": "fiction",
+    "candidates": 425,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 514,
+    "title": "Little Women",
+    "author": "Louisa May Alcott",
+    "category": "fiction",
+    "candidates": 1189,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 45,
+    "title": "Anne of Green Gables",
+    "author": "L. M. Montgomery",
+    "category": "fiction",
+    "candidates": 599,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 1952,
+    "title": "The Yellow Wallpaper",
+    "author": "Charlotte Perkins Gilman",
+    "category": "fiction",
+    "candidates": 49,
+    "kept": 49,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 244,
+    "title": "A Study in Scarlet",
+    "author": "Arthur Conan Doyle",
+    "category": "fiction",
+    "candidates": 269,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 541,
+    "title": "The Age of Innocence",
+    "author": "Edith Wharton",
+    "category": "fiction",
+    "candidates": 717,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 2775,
+    "title": "The Good Soldier",
+    "author": "Ford Madox Ford",
+    "category": "fiction",
+    "candidates": 412,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 271,
+    "title": "Black Beauty",
+    "author": "Anna Sewell",
+    "category": "fiction",
+    "candidates": 321,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 205,
+    "title": "Walden",
+    "author": "Henry David Thoreau",
+    "category": "nonfiction",
+    "candidates": 296,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 16643,
+    "title": "Essays by Ralph Waldo Emerson",
+    "author": "Ralph Waldo Emerson",
+    "category": "nonfiction",
+    "candidates": 383,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 20203,
+    "title": "Autobiography of Benjamin Franklin",
+    "author": "Benjamin Franklin",
+    "category": "nonfiction",
+    "candidates": 380,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 23,
+    "title": "Narrative of the Life of Frederick Douglass, an American Slave",
+    "author": "Frederick Douglass",
+    "category": "nonfiction",
+    "candidates": 109,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 1228,
+    "title": "On the Origin of Species",
+    "author": "Charles Darwin",
+    "category": "nonfiction",
+    "candidates": 502,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 1404,
+    "title": "The Federalist Papers",
+    "author": "Alexander Hamilton",
+    "category": "nonfiction",
+    "candidates": 833,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 147,
+    "title": "Common Sense",
+    "author": "Thomas Paine",
+    "category": "nonfiction",
+    "candidates": 127,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 34901,
+    "title": "On Liberty",
+    "author": "John Stuart Mill",
+    "category": "nonfiction",
+    "candidates": 55,
+    "kept": 55,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 3207,
+    "title": "Leviathan",
+    "author": "Thomas Hobbes",
+    "category": "nonfiction",
+    "candidates": 806,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 5827,
+    "title": "The Problems of Philosophy",
+    "author": "Bertrand Russell",
+    "category": "nonfiction",
+    "candidates": 233,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 408,
+    "title": "The Souls of Black Folk",
+    "author": "W. E. B. Du Bois",
+    "category": "nonfiction",
+    "candidates": 309,
+    "kept": 80,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 1080,
+    "title": "A Modest Proposal",
+    "author": "Jonathan Swift",
+    "category": "nonfiction",
+    "candidates": 20,
+    "kept": 20,
+    "status": "ok"
+  },
+  {
+    "gutenberg_id": 2130,
+    "title": "Utopia",
+    "status": "skipped_translation"
+  },
+  {
+    "gutenberg_id": 3300,
+    "title": "The Wealth of Nations",
+    "author": "Adam Smith",
+    "category": "nonfiction",
+    "candidates": 1271,
+    "kept": 80,
+    "status": "ok"
+  }
+]
