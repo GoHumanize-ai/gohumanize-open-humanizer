@@ -81,10 +81,16 @@ def cap_recall(reference: str, candidate: str) -> float:
 def generate(model_path: str, max_rows: int = 200) -> list[str]:
     """Rewrite the test inputs with one model. One container per model: vLLM does not
     release GPU memory cleanly enough to load a second model in the same process."""
+    import os
+
+    # The FlashInfer sampling kernel failed during vLLM's warm-up on the A10G; use the
+    # PyTorch sampler and eager mode. Slower, but 200 rows take only a few minutes.
+    os.environ["VLLM_USE_FLASHINFER_SAMPLER"] = "0"
     from vllm import LLM, SamplingParams
 
     rows = [json.loads(l) for l in open(f"{REMOTE_DATA}/test.jsonl")][:max_rows]
-    llm = LLM(model=model_path, dtype="bfloat16", max_model_len=2048, gpu_memory_utilization=0.85)
+    llm = LLM(model=model_path, dtype="bfloat16", max_model_len=2048, gpu_memory_utilization=0.85,
+              enforce_eager=True)
     tok = llm.get_tokenizer()
     prompts = [tok.apply_chat_template(
         [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": r["input"]}],
