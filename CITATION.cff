@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this model, dataset or code, please cite it as below."
+title: "GoHumanize Open Humanizer: building a small text-humanization model from public-domain data"
+type: software
+authors:
+  - name: "GoHumanize team"
+    website: "https://gohumanize.ai"
+date-released: 2026-09-18
+version: "1.0.0"
+license: Apache-2.0
+repository-code: "https://github.com/GoHumanize-ai/gohumanize-open-humanizer"
+url: "https://gohumanize.ai/research"
+keywords:
+  - humanizer
+  - text-rewriting
+  - style-transfer
+  - qwen3
+  - public-domain
+  - project-gutenberg
