@@ -68,18 +68,27 @@ MCP server (`npx gohumanize-open-humanizer-mcp`) and a Python client
 | Method | QLoRA with Unsloth: 4-bit base, LoRA rank 16, alpha 32, all attention and MLP projections |
 | Data | 2,000 train / 200 test pairs, see the dataset card |
 | Loss | on the assistant (human target) tokens only |
-| Epochs, LR, batch | TBD |
-| Hardware | 1x NVIDIA A10G (24 GB) on Modal, TBD minutes |
-| Tracking | Weights & Biases, run link TBD |
-| Final losses | train TBD, eval TBD |
+| Epochs, LR, batch | 2 epochs (250 steps), 2e-4 cosine, effective batch 16, max 1,024 tokens |
+| Hardware | 1x NVIDIA A10G (24 GB) on Modal, 21.7 minutes |
+| Tracking | [Weights & Biases run](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg) |
+| Final losses | train 1.30, eval 1.39 (3.17 before training) |
 
 The LoRA adapter is in `lora/`; the main files are the merged 16-bit weights.
 
 ## Evaluation
 
 Base Qwen3-4B vs this model on the 200 held-out pairs, against the human original.
-TBD table (BERTScore F1, ROUGE-L, name recall, length ratio, contractions,
-transition words, stock phrases, sentence length).
+
+| Measure (200 held-out pairs) | AI-styled input | Base Qwen3-4B | Open Humanizer | Human target |
+|---|---|---|---|---|
+| BERTScore F1 vs human (higher = closer meaning) | 0.914 | 0.900 | 0.921 |  |
+| ROUGE-L vs human (higher = closer wording) | 0.493 | 0.424 | 0.540 |  |
+| Names/capitalised tokens kept (recall) | 0.587 | 0.594 | 0.623 |  |
+| Length ratio vs human | 1.027 | 0.830 | 0.928 | 1.000 |
+| Contractions per 100 words | 0.279 | 0.772 | 0.044 | 0.118 |
+| Transition words per 100 words | 0.757 | 0.023 | 0.106 | 0.143 |
+| Stock LLM phrases per text | 0.19 | 0.01 | 0.00 | 0.00 |
+| Average sentence length (words) | 21.6 | 15.2 | 22.5 | 28.1 |
 
 These measure how far the output moves from AI-styled prose towards the human
 target. They are not detector scores.

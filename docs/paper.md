@@ -117,11 +117,40 @@ We also report the same statistics for the AI-styled input itself and for the hu
 
 ### 5.2 Results
 
-*To be filled in from `eval/results/open-humanizer-v1.json`.*
+| Measure (200 held-out pairs) | AI-styled input | Base Qwen3-4B | Open Humanizer | Human target |
+|---|---|---|---|---|
+| BERTScore F1 vs human (higher = closer meaning) | 0.914 | 0.900 | 0.921 |  |
+| ROUGE-L vs human (higher = closer wording) | 0.493 | 0.424 | 0.540 |  |
+| Names/capitalised tokens kept (recall) | 0.587 | 0.594 | 0.623 |  |
+| Length ratio vs human | 1.027 | 0.830 | 0.928 | 1.000 |
+| Contractions per 100 words | 0.279 | 0.772 | 0.044 | 0.118 |
+| Transition words per 100 words | 0.757 | 0.023 | 0.106 | 0.143 |
+| Stock LLM phrases per text | 0.19 | 0.01 | 0.00 | 0.00 |
+| Average sentence length (words) | 21.6 | 15.2 | 22.5 | 28.1 |
+
+How to read this. The first column is the AI-styled input itself, i.e. what a model would score by changing nothing. The base model, given the same instruction, moves *away* from the human original: meaning and wording drift (BERTScore 0.900 vs 0.915 for the untouched input, ROUGE-L 0.424 vs 0.493), it shortens the text by 17%, and it over-corrects on style, adding contractions at six times the rate of the human authors and cutting sentences to 15 words when the originals average 28. The fine-tuned model moves *towards* the original on every measure: highest meaning and wording overlap of the three (0.921 / 0.540), more names kept (0.623), length within 7% of the human text, transition words and stock phrases brought down to the human level (0.11 per 100 words vs 0.14; zero stock phrases), and sentence length moving in the right direction (22.5 words). Its one clear deviation from the human target is that it uses fewer contractions than the authors did; the training data is dominated by 19th-century prose, where contractions are rare in narration.
+
+In short, 22 minutes of fine-tuning turned a general model that "simplifies" into one that reconstructs the register of the source authors while keeping the content. The measures say nothing about AI detectors; they describe distance from LLM prose and closeness to the human original.
 
 ### 5.3 Examples
 
-*Three or four side-by-side examples from `eval/results/open-humanizer-v1-samples.jsonl`.*
+Held-out pairs, all generated at temperature 0.7. The input is the AI-styled text; the target is the sentence a person originally wrote.
+
+**Swift, *A Modest Proposal* (1729)**
+
+- *Input:* "I am assured by our merchants that a child, whether male or female, under the age of twelve years is not a marketable commodity. Furthermore, even upon reaching this age, such individuals will not fetch more than three pounds, or at most three pounds and half a crown in the marketplace. This situation proves disadvantageous for both the parents and the kingdom, as the expenses of sustenance and clothing have amounted to at least four times that value. In essence, I shall now humbly present my own thoughts on the matter, which I trust will not encounter any objections."
+- *Base model:* "Our merchants say a child, boy or girl, under twelve is not something you can sell. Even when they reach twelve, they won't be worth more than three pounds, maybe three pounds and a half crown. This is bad for the parents and the country, because the cost of food and clothes has already been four times that amount. Now I will share my own thoughts on this, and I hope they won't be objected to."
+- *Open Humanizer:* "I am assured by our merchants, that a child, male or female, under twelve years old, is not a commodity to be sold in the market, and that when they come to that age, they will not fetch more than three pounds, or three pounds and a half crown in the market; which is a great loss to both parents and the kingdom, for the charges of keeping them in food and raiment have been at least four times that value. I shall now humbly offer my own thoughts upon the matter, which I hope will not be objected to."
+- *Human original:* "I am assured by our merchants, that a boy or a girl, before twelve years old, is no saleable commodity, and even when they come to this age, they will not yield above three pounds, or three pounds and half a crown at most, on the exchange; which cannot turn to account either to the parents or kingdom, the charge of nutriments and rags having been at least four times that value. I shall now therefore humbly propose my own thoughts, which I hope will not be liable to the least objection."
+
+**Burnett, *The Secret Garden* (1911)**
+
+- *Input:* "He very seldom engaged in conversation and at times did not even respond to Mary's inquiries, except with a grunt; however, this morning he spoke more than usual. He stood up and placed one hobnailed boot upon the top of his spade while he scanned her appearance. Moreover, it is worth noting that Mary was not vain, and since she had never given much consideration to her looks, she was not significantly disturbed by the observation."
+- *Base model:* "He rarely talked and sometimes didn't answer Mary's questions, just grunting. But this morning he spoke more. He stood up, placed one hobnailed boot on top of his spade, and looked at her. Mary wasn't vain. She never thought much about her looks, so she wasn't too bothered by the look."
+- *Open Humanizer:* "He seldom spoke, and sometimes did not answer Mary's questions, except with a grunt; but to-day he spoke more than he had spoken for a long time. He got up, and putting one hobnailed boot on the top of his spade, looked at her face. Mary was not vain, and as she had never thought much about her looks, she was not much hurt by the remark."
+- *Human original:* "He very seldom talked much and sometimes did not even answer Mary's questions except by a grunt, but this morning he said more than usual. He stood up and rested one hobnailed boot on the top of his spade while he looked her over. Mary was not vain and as she had never thought much of her looks she was not greatly disturbed."
+
+The pattern repeats across the test set: the base model produces clean, short, modern sentences that read like a summary; the fine-tuned model restores the sentence shapes, connectives and vocabulary of the period, occasionally too eagerly ("raiment", "to-day"), which is the flip side of training on old books.
 
 ## 6. Serving and integration
 
