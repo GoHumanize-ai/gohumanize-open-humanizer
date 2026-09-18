@@ -14,6 +14,7 @@ target. They are NOT detector scores and make no claim about AI detectors.
 
 Run:
     modal run eval/modal_eval.py --run-name open-humanizer-v1
+Generation for the two models runs in parallel containers; scoring runs in a third.
 Outputs eval/results/<run-name>.json and eval/results/<run-name>-samples.jsonl locally.
 """
 
@@ -76,28 +77,28 @@ def cap_recall(reference: str, candidate: str) -> float:
     return len(caps & cand) / len(caps)
 
 
-@app.function(image=image, gpu="A10G", timeout=2 * 60 * 60, volumes={REMOTE_MODELS: volume})
-def evaluate(run_name: str, max_rows: int = 200) -> dict:
-    from bert_score import score as bert_score
-    from rouge_score import rouge_scorer
+@app.function(image=image, gpu="A10G", timeout=60 * 60, volumes={REMOTE_MODELS: volume})
+def generate(model_path: str, max_rows: int = 200) -> list[str]:
+    """Rewrite the test inputs with one model. One container per model: vLLM does not
+    release GPU memory cleanly enough to load a second model in the same process."""
     from vllm import LLM, SamplingParams
 
     rows = [json.loads(l) for l in open(f"{REMOTE_DATA}/test.jsonl")][:max_rows]
-    models = {"base": BASE_MODEL, "finetuned": f"{REMOTE_MODELS}/{run_name}/merged-16bit"}
-    outputs: dict[str, list[str]] = {}
-    for name, path in models.items():
-        llm = LLM(model=path, dtype="bfloat16", max_model_len=2048, gpu_memory_utilization=0.85)
-        tok = llm.get_tokenizer()
-        prompts = [tok.apply_chat_template(
-            [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": r["input"]}],
-            tokenize=False, add_generation_prompt=True, enable_thinking=False) for r in rows]
-        gen = llm.generate(prompts, SamplingParams(temperature=0.7, top_p=0.9, max_tokens=700, seed=13))
-        outputs[name] = [g.outputs[0].text.strip() for g in gen]
-        del llm
-        import gc, torch
-        gc.collect()
-        torch.cuda.empty_cache()
+    llm = LLM(model=model_path, dtype="bfloat16", max_model_len=2048, gpu_memory_utilization=0.85)
+    tok = llm.get_tokenizer()
+    prompts = [tok.apply_chat_template(
+        [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": r["input"]}],
+        tokenize=False, add_generation_prompt=True, enable_thinking=False) for r in rows]
+    gen = llm.generate(prompts, SamplingParams(temperature=0.7, top_p=0.9, max_tokens=700, seed=13))
+    return [g.outputs[0].text.strip() for g in gen]
 
+
+@app.function(image=image, gpu="A10G", timeout=60 * 60)
+def score(run_name: str, outputs: dict, max_rows: int = 200) -> dict:
+    from bert_score import score as bert_score
+    from rouge_score import rouge_scorer
+
+    rows = [json.loads(l) for l in open(f"{REMOTE_DATA}/test.jsonl")][:max_rows]
     refs = [r["output"] for r in rows]
     inputs = [r["input"] for r in rows]
     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
@@ -132,7 +133,10 @@ def evaluate(run_name: str, max_rows: int = 200) -> dict:
 
 @app.local_entrypoint()
 def main(run_name: str = "open-humanizer-v1", max_rows: int = 200):
-    report = evaluate.remote(run_name, max_rows)
+    models = {"base": BASE_MODEL, "finetuned": f"{REMOTE_MODELS}/{run_name}/merged-16bit"}
+    names = list(models)
+    gens = list(generate.map(models.values(), kwargs={"max_rows": max_rows}))
+    report = score.remote(run_name, dict(zip(names, gens)), max_rows)
     out = REPO_ROOT / "eval" / "results"
     out.mkdir(parents=True, exist_ok=True)
     samples = report.pop("samples")
