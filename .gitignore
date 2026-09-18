@@ -11,3 +11,6 @@ wandb/
 outputs/
 *.gguf
 .DS_Store
+build/
+dist/
+*.egg-info/

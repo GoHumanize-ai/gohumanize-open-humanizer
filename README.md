@@ -52,6 +52,7 @@ serve/      modal_serve.py (OpenAI-compatible vLLM endpoint)
 demo/       Gradio app (optional self-hosted demo)
 packages/   python client + CLI
 dataset/    released files, stats and dataset card
+scripts/    zenodo_deposit.py (archive the release and mint a DOI)
 docs/       paper, model card, notes
 ```
 
