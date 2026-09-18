@@ -136,6 +136,8 @@ def train(
     import dataclasses
     cfg_fields = {f.name for f in dataclasses.fields(SFTConfig)}
     seq_kw = {"max_length": max_seq_length} if "max_length" in cfg_fields else {"max_seq_length": max_seq_length}
+    if "eos_token" in cfg_fields:  # newer TRL wants the EOS token named explicitly for Qwen tokenizers
+        seq_kw["eos_token"] = tokenizer.eos_token
     trainer = SFTTrainer(
         model=model,
         processing_class=tokenizer,
