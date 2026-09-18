@@ -20,8 +20,8 @@ that explains every step and every service used.
 | Python client | [`packages/python`](packages/python) (PyPI: `gohumanize-open-humanizer`) |
 | Project page | https://gohumanize.ai/research |
 
-Model weights, GGUF files, the dataset and a browser demo are published on Hugging
-Face under https://huggingface.co/gohumanize (links on the project page).
+Model weights, GGUF files and the dataset are published on Hugging Face under
+https://huggingface.co/gohumanize; the browser demo is on the project page.
 
 The Open Humanizer is separate from the production models used by GoHumanize.ai and
 **makes no claim about AI detectors**. Its purpose is to show how such a tool is
@@ -49,7 +49,7 @@ pipeline/   01 source Gutenberg -> 02 select -> 03 AI-fy -> 04 build dataset
 train/      modal_train.py (QLoRA on Modal), push_to_hub.py (HF upload + GGUF), runs/ (summaries)
 eval/       modal_eval.py (base vs fine-tuned), results/
 serve/      modal_serve.py (OpenAI-compatible vLLM endpoint)
-demo/       Gradio app for the Hugging Face Space
+demo/       Gradio app (optional self-hosted demo)
 packages/   python client + CLI
 dataset/    released files, stats and dataset card
 docs/       paper, model card, notes

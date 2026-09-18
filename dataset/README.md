@@ -3,7 +3,7 @@ language:
 - en
 license: cc-by-4.0
 task_categories:
-- text2text-generation
+- text-generation
 pretty_name: GoHumanize Open Humanizer Dataset
 size_categories:
 - 1K<n<10K

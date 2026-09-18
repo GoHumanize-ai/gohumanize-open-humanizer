@@ -158,7 +158,7 @@ The pattern repeats across the test set: the base model produces clean, short, m
 - **Endpoint**: `serve/modal_serve.py` runs vLLM on Modal behind an OpenAI-compatible API (`/v1/chat/completions`). The container scales to zero when idle, so the demo costs nothing while unused and roughly one A10G-hour per hour of use.
 - **MCP server** (`npx gohumanize-open-humanizer-mcp`) exposes a `humanize_text` tool to AI assistants. It calls the endpoint above by default, or any OpenAI-compatible server you point it at, including a local Ollama running the GGUF.
 - **Python client** (`pip install gohumanize-open-humanizer`) with an `open-humanizer` command, same options.
-- **Demo Space** on Hugging Face for trying the model in a browser.
+- **Browser demo** on the project page (gohumanize.ai/research): a small form that calls the endpoint through the site's own server route, so the key stays server-side. A Gradio app for a Hugging Face Space is included in `demo/` for anyone who wants to host their own copy.
 
 ## 7. Services used, and why
 
@@ -168,7 +168,7 @@ The pattern repeats across the test set: the base model produces clean, short, m
 | OpenAI, OpenRouter, DeepSeek | AI-fication | Three different model families for variety; all cheap at this volume (about $1 in total). |
 | Modal | GPU for training, evaluation and serving | Pay-per-second GPUs from a Python script, no servers to manage, scale-to-zero serving. |
 | Weights & Biases | Experiment tracking | Every run's settings and loss curves are recorded and shareable. |
-| Hugging Face | Hosting weights, dataset, demo | The standard place developers look for open models; free hosting. |
+| Hugging Face | Hosting weights and dataset | The standard place developers look for open models; free hosting for public repositories. |
 | llama.cpp | GGUF conversion | Lets the model run on CPUs and laptops. |
 | GitHub | Code and this document | |
 | npm, PyPI | MCP server and Python client | One-command install for developers. |

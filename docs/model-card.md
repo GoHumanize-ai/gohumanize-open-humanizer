@@ -57,8 +57,9 @@ print(tok.decode(out[0][ids.shape[1]:], skip_special_tokens=True))
 ```
 
 Also available: a GGUF build in `gguf/` for Ollama / LM Studio / llama.cpp, an
-MCP server (`npx gohumanize-open-humanizer-mcp`) and a Python client
-(`pip install gohumanize-open-humanizer`).
+MCP server (`npx gohumanize-open-humanizer-mcp`), a Python client
+(`pip install gohumanize-open-humanizer`) and a browser demo at
+https://gohumanize.ai/research.
 
 ## Training
 
