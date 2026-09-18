@@ -106,3 +106,20 @@ def gguf(run_name: str, repo: str = "", quants: str = "Q4_K_M,Q8_0") -> list[str
         uploaded.append(path)
     volume.commit()
     return uploaded
+
+
+@app.function(image=push_image, volumes={"/models": volume}, secrets=secrets, timeout=60 * 60)
+def upload_gguf(run_name: str, repo: str, quants: str = "Q4_K_M,Q8_0") -> list[str]:
+    """Upload GGUF files built earlier by `gguf` (without rebuilding them)."""
+    import os
+
+    from huggingface_hub import HfApi
+
+    api = HfApi(token=os.environ["HF_TOKEN"])
+    done = []
+    for q in quants.split(","):
+        name = f"gohumanize-open-humanizer-{q.strip()}.gguf"
+        api.upload_file(repo_id=repo, path_or_fileobj=f"/models/{run_name}/gguf/{name}",
+                        path_in_repo=f"gguf/{name}", commit_message=f"Add {q.strip()} GGUF")
+        done.append(name)
+    return done

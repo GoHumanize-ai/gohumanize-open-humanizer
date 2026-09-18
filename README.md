@@ -21,7 +21,7 @@ that explains every step and every service used.
 | Project page | https://gohumanize.ai/research |
 
 Model weights, GGUF files, the dataset and a browser demo are published on Hugging
-Face under the `GoHumanize-ai` organisation (links on the project page).
+Face under https://huggingface.co/gohumanize (links on the project page).
 
 The Open Humanizer is separate from the production models used by GoHumanize.ai and
 **makes no claim about AI detectors**. Its purpose is to show how such a tool is

@@ -13,7 +13,7 @@ tags:
 - unsloth
 - lora
 datasets:
-- GoHumanize-ai/gohumanize-open-humanizer-dataset
+- gohumanize/gohumanize-open-humanizer-dataset
 ---
 
 # GoHumanize Open Humanizer
@@ -42,7 +42,7 @@ Chat format, thinking disabled. The system prompt below is the one used in train
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
-repo = "GoHumanize-ai/gohumanize-open-humanizer"
+repo = "gohumanize/gohumanize-open-humanizer"
 tok = AutoTokenizer.from_pretrained(repo)
 model = AutoModelForCausalLM.from_pretrained(repo, torch_dtype=torch.bfloat16, device_map="auto")
 

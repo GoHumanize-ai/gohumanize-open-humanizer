@@ -1,0 +1,2 @@
+[console_scripts]
+open-humanizer = gohumanize_open_humanizer:main

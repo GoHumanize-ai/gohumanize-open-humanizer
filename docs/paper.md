@@ -206,7 +206,7 @@ Total cost of one full reproduction: under $5. Total time: about two hours inclu
 
 - Project page: https://gohumanize.ai/research
 - Code and this document: https://github.com/GoHumanize-ai/gohumanize-open-humanizer
-- Model, dataset, demo: Hugging Face, organisation GoHumanize-ai
+- Model, dataset, demo: https://huggingface.co/gohumanize
 - Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg
 
 ## Citation
