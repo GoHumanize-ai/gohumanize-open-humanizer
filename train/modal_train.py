@@ -136,8 +136,13 @@ def train(
     import dataclasses
     cfg_fields = {f.name for f in dataclasses.fields(SFTConfig)}
     seq_kw = {"max_length": max_seq_length} if "max_length" in cfg_fields else {"max_seq_length": max_seq_length}
-    if "eos_token" in cfg_fields:  # newer TRL wants the EOS token named explicitly for Qwen tokenizers
+    # Newer TRL/Unsloth combinations default eos_token to a placeholder that is not in the
+    # Qwen tokenizer vocabulary; name the real one explicitly. Older versions reject the kwarg.
+    try:
+        SFTConfig(output_dir="/tmp/probe", eos_token=tokenizer.eos_token)
         seq_kw["eos_token"] = tokenizer.eos_token
+    except TypeError:
+        pass
     trainer = SFTTrainer(
         model=model,
         processing_class=tokenizer,
@@ -152,7 +157,7 @@ def train(
             gradient_accumulation_steps=grad_accum,
             learning_rate=learning_rate,
             lr_scheduler_type="cosine",
-            warmup_ratio=0.05,
+            warmup_steps=10,
             weight_decay=0.01,
             bf16=True,
             logging_steps=10,
