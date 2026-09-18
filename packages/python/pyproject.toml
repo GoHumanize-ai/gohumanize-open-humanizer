@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gohumanize-open-humanizer"
+version = "0.1.0"
+description = "Client and CLI for the GoHumanize Open Humanizer, an open Qwen3-4B fine-tune that rewrites AI-styled text into natural prose"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.9"
+authors = [{ name = "GoHumanize team" }]
+keywords = ["humanizer", "text-rewriting", "open-model", "gohumanize"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Topic :: Text Processing :: Linguistic",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://gohumanize.ai/research"
+Repository = "https://github.com/GoHumanize-ai/gohumanize-open-humanizer"
+
+[project.scripts]
+open-humanizer = "gohumanize_open_humanizer:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
