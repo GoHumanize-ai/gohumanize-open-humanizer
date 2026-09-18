@@ -82,7 +82,7 @@ def push(run_name: str, repo: str, private: bool = True) -> str:
 
 @app.function(image=gguf_image, volumes={"/models": volume}, secrets=secrets,
               timeout=2 * 60 * 60, cpu=8, memory=32768)
-def gguf(run_name: str, repo: str, quants: str = "Q4_K_M,Q8_0") -> list[str]:
+def gguf(run_name: str, repo: str = "", quants: str = "Q4_K_M,Q8_0") -> list[str]:
     import os
     import subprocess
 
@@ -95,13 +95,14 @@ def gguf(run_name: str, repo: str, quants: str = "Q4_K_M,Q8_0") -> list[str]:
     subprocess.run(["python", "/llama.cpp/convert_hf_to_gguf.py", src, "--outfile", f16,
                     "--outtype", "f16"], check=True)
     uploaded = []
-    api = HfApi(token=os.environ["HF_TOKEN"])
+    api = HfApi(token=os.environ["HF_TOKEN"]) if repo else None  # empty repo = build only
     for q in quants.split(","):
         q = q.strip()
         path = f"{out_dir}/gohumanize-open-humanizer-{q}.gguf"
         subprocess.run(["/llama.cpp/build/bin/llama-quantize", f16, path, q], check=True)
-        api.upload_file(repo_id=repo, path_or_fileobj=path, path_in_repo=f"gguf/{os.path.basename(path)}",
-                        commit_message=f"Add {q} GGUF")
+        if api:
+            api.upload_file(repo_id=repo, path_or_fileobj=path, path_in_repo=f"gguf/{os.path.basename(path)}",
+                            commit_message=f"Add {q} GGUF")
         uploaded.append(path)
     volume.commit()
     return uploaded
