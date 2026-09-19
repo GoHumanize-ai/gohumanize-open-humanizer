@@ -21,7 +21,7 @@ from importlib.metadata import PackageNotFoundError, version as _pkg_version
 try:  # the single source of truth is pyproject.toml
     __version__ = _pkg_version("gohumanize-open-humanizer")
 except PackageNotFoundError:  # running from a source checkout
-    __version__ = "0.1.1"
+    __version__ = "0.1.2"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
@@ -64,6 +64,10 @@ class Humanizer:
                          {"role": "user", "content": text}],
             "chat_template_kwargs": {"enable_thinking": False},
         }
+        # No key and the default endpoint: the request will be refused, but only after
+        # the hosted container has booted, which can take a couple of minutes.
+        if not self.api_key and self.base_url == DEFAULT_URL.rstrip("/"):
+            raise RuntimeError(ENDPOINT_HELP)
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
