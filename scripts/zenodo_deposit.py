@@ -9,6 +9,7 @@ explicit step:
     python scripts/zenodo_deposit.py --create            # draft + files + metadata
     python scripts/zenodo_deposit.py --refresh <id>      # replace files + metadata on a draft
     python scripts/zenodo_deposit.py --publish <id>      # mint the DOI
+    python scripts/zenodo_deposit.py --update-metadata <id>   # fix metadata on a published record
 
 Token: ~/.zenodo_token or ZENODO_TOKEN.
 """
@@ -40,10 +41,16 @@ METADATA = {
             "AI-fication of inputs with three generators, training, evaluation, serving), the dataset "
             "of 2,000 training and 200 test pairs (CC-BY 4.0), the evaluation results and the paper-style "
             "write-up explaining every step and service used.</p>"
-            "<p>Model weights and GGUF builds: https://huggingface.co/gohumanize/gohumanize-open-humanizer. "
-            "Dataset: https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset. "
-            "Code: https://github.com/GoHumanize-ai/gohumanize-open-humanizer. "
-            "Project page: https://gohumanize.ai/research.</p>"
+            "<p><b>Links</b></p><ul>"
+            "<li>Project page and browser demo: https://gohumanize.ai/research</li>"
+            "<li>Model weights, LoRA adapter and GGUF builds: https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
+            "<li>Dataset (CC-BY 4.0): https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset</li>"
+            "<li>Code, pipeline and write-up: https://github.com/GoHumanize-ai/gohumanize-open-humanizer</li>"
+            "<li>Paper: https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md</li>"
+            "<li>Python client and CLI: https://pypi.org/project/gohumanize-open-humanizer/</li>"
+            "<li>MCP server: https://www.npmjs.com/package/gohumanize-open-humanizer-mcp "
+            "(source: https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp)</li>"
+            "<li>Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg</li></ul>"
             "<p>The Open Humanizer is separate from the production models used by GoHumanize.ai and makes "
             "no claim about AI detectors.</p>"
         ),
@@ -57,6 +64,9 @@ METADATA = {
             {"identifier": "https://huggingface.co/gohumanize/gohumanize-open-humanizer", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://gohumanize.ai/research", "relation": "isDescribedBy", "scheme": "url"},
+            {"identifier": "https://pypi.org/project/gohumanize-open-humanizer/", "relation": "isSupplementedBy", "scheme": "url"},
+            {"identifier": "https://www.npmjs.com/package/gohumanize-open-humanizer-mcp", "relation": "isSupplementedBy", "scheme": "url"},
+            {"identifier": "https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp", "relation": "isSupplementedBy", "scheme": "url"},
         ],
     }
 }
@@ -132,6 +142,19 @@ def refresh(tok: str, dep_id: int) -> None:
     set_metadata(tok, dep)
 
 
+def update_metadata(tok: str, dep_id: int) -> None:
+    """Change the metadata of a PUBLISHED record in place (no new version or DOI)."""
+    h = {"Authorization": f"Bearer {tok}"}
+    r = requests.post(f"{API}/deposit/depositions/{dep_id}/actions/edit", headers=h, timeout=60)
+    if r.status_code not in (201, 400):  # 400 = already in edit mode
+        r.raise_for_status()
+    r = requests.put(f"{API}/deposit/depositions/{dep_id}", json=METADATA, headers=h, timeout=60)
+    r.raise_for_status()
+    r = requests.post(f"{API}/deposit/depositions/{dep_id}/actions/publish", headers=h, timeout=60)
+    r.raise_for_status()
+    print("metadata updated:", r.json()["doi_url"])
+
+
 def publish(tok: str, dep_id: int) -> None:
     h = {"Authorization": f"Bearer {tok}"}
     r = requests.post(f"{API}/deposit/depositions/{dep_id}/actions/publish", headers=h, timeout=60)
@@ -145,11 +168,14 @@ if __name__ == "__main__":
     g.add_argument("--create", action="store_true")
     g.add_argument("--refresh", type=int, metavar="DEPOSITION_ID")
     g.add_argument("--publish", type=int, metavar="DEPOSITION_ID")
+    g.add_argument("--update-metadata", type=int, metavar="DEPOSITION_ID")
     a = ap.parse_args()
     t = token()
     if a.create:
         create(t)
     elif a.refresh:
         refresh(t, a.refresh)
+    elif a.update_metadata:
+        update_metadata(t, a.update_metadata)
     else:
         publish(t, a.publish)
