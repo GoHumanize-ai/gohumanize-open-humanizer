@@ -14,12 +14,30 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
 import urllib.request
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
-__version__ = "0.1.0"
+try:  # the single source of truth is pyproject.toml
+    __version__ = _pkg_version("gohumanize-open-humanizer")
+except PackageNotFoundError:  # running from a source checkout
+    __version__ = "0.1.1"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
+
+# The default endpoint is the one behind the browser demo; it is rate-limited and
+# needs a key, so it is not open for general use. Say what to do instead of
+# surfacing a bare 401.
+ENDPOINT_HELP = (
+    "The hosted endpoint refused the request: it requires an API key and is not open "
+    "for general use.\n"
+    "Run the model yourself, which needs no key:\n"
+    "  ollama pull hf.co/gohumanize/gohumanize-open-humanizer:Q4_K_M\n"
+    '  Humanizer(base_url="http://localhost:11434/v1", '
+    'model="hf.co/gohumanize/gohumanize-open-humanizer:Q4_K_M")\n'
+    "or pass api_key=..., or try the model in a browser at https://gohumanize.ai/research"
+)
 SYSTEM_PROMPT = (
     "Rewrite the following text so that it reads as if a person wrote it: varied sentence "
     "length, concrete wording, natural rhythm, no filler transitions. Keep the meaning, the "
@@ -51,8 +69,13 @@ class Humanizer:
             headers["Authorization"] = f"Bearer {self.api_key}"
         req = urllib.request.Request(f"{self.base_url}/chat/completions",
                                      data=json.dumps(body).encode(), headers=headers)
-        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-            data = json.load(resp)
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                data = json.load(resp)
+        except urllib.error.HTTPError as error:
+            if error.code in (401, 403):
+                raise RuntimeError(ENDPOINT_HELP) from error
+            raise
         return data["choices"][0]["message"]["content"].strip()
 
     def humanize_document(self, text: str, temperature: float = 0.7) -> str:
