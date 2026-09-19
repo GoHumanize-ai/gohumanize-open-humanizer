@@ -17,11 +17,15 @@ open-humanizer "It is worth noting that the committee reached a consensus."
 ```python
 from gohumanize_open_humanizer import Humanizer
 
-h = Humanizer()  # public demo endpoint
+# Your own copy of the model, which needs no key:
+#   ollama pull hf.co/gohumanize/gohumanize-open-humanizer:Q4_K_M
+h = Humanizer(base_url="http://localhost:11434/v1",
+              model="hf.co/gohumanize/gohumanize-open-humanizer:Q4_K_M")
 print(h.humanize("It is worth noting that the committee reached a consensus."))
 
-# your own copy of the model, e.g. Ollama with the GGUF build
-h = Humanizer(base_url="http://localhost:11434/v1", model="gohumanize/open-humanizer")
+# Humanizer() with no arguments points at the endpoint behind the browser demo,
+# which is rate-limited and needs OPEN_HUMANIZER_API_KEY. To try the model without
+# installing anything, use the demo at https://gohumanize.ai/research
 ```
 
 Environment variables `OPEN_HUMANIZER_URL`, `OPEN_HUMANIZER_MODEL` and
