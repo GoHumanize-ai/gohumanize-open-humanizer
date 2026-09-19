@@ -5,11 +5,25 @@ type: software
 authors:
   - name: "GoHumanize team"
     website: "https://gohumanize.ai"
-date-released: 2026-09-18
-version: "1.0.0"
+date-released: 2026-09-19
+version: "0.1.0"
+doi: "10.5281/zenodo.22843083"
 license: Apache-2.0
 repository-code: "https://github.com/GoHumanize-ai/gohumanize-open-humanizer"
 url: "https://gohumanize.ai/research"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22843083"
+    description: "Zenodo concept DOI, resolves to the newest version"
+  - type: doi
+    value: "10.5281/zenodo.22843084"
+    description: "Zenodo DOI for version 0.1.0"
+  - type: url
+    value: "https://huggingface.co/gohumanize/gohumanize-open-humanizer"
+    description: "Model weights"
+  - type: url
+    value: "https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset"
+    description: "Dataset"
 keywords:
   - humanizer
   - text-rewriting

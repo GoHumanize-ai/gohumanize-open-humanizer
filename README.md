@@ -12,13 +12,15 @@ that explains every step and every service used.
 | | |
 |---|---|
 | Write-up (paper) | [`docs/paper.md`](docs/paper.md) |
+| Model weights, LoRA and GGUF | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Model card | [`docs/model-card.md`](docs/model-card.md) |
-| Dataset and card | [`dataset/`](dataset/) (2,000 train / 200 test, CC-BY 4.0) |
+| Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), card and files in [`dataset/`](dataset/) (2,000 train / 200 test, CC-BY 4.0) |
+| Archived release, DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Evaluation results | [`eval/results/`](eval/results/) |
 | Training run | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg) |
-| MCP server | [gohumanize-open-humanizer-mcp](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) (npm) |
-| Python client | [`packages/python`](packages/python) (PyPI: `gohumanize-open-humanizer`) |
-| Project page | https://gohumanize.ai/research |
+| MCP server | [npm: gohumanize-open-humanizer-mcp](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp), [source](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) |
+| Python client | [PyPI: gohumanize-open-humanizer](https://pypi.org/project/gohumanize-open-humanizer/), source in [`packages/python`](packages/python) |
+| Project page and demo | https://gohumanize.ai/research |
 
 Model weights, GGUF files and the dataset are published on Hugging Face under
 https://huggingface.co/gohumanize; the browser demo is on the project page.
@@ -82,4 +84,4 @@ modal deploy serve/modal_serve.py
 
 Code and model: Apache-2.0. Dataset: CC-BY 4.0. See [`CITATION.cff`](CITATION.cff).
 
-> GoHumanize team (2026). *GoHumanize Open Humanizer: building a small text-humanization model from public-domain data.* https://gohumanize.ai/research
+> GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.1.0. Zenodo. https://doi.org/10.5281/zenodo.22843083

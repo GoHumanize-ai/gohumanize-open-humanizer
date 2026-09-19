@@ -205,12 +205,17 @@ Total cost of one full reproduction: under $5. Total time: about two hours inclu
 ## Links
 
 - Project page: https://gohumanize.ai/research
-- Code and this document: https://github.com/GoHumanize-ai/gohumanize-open-humanizer
-- Model, dataset, demo: https://huggingface.co/gohumanize
-- Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg
+- Model weights, LoRA adapter and GGUF builds (Hugging Face): https://huggingface.co/gohumanize/gohumanize-open-humanizer
+- Dataset (Hugging Face, CC-BY 4.0): https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset
+- Code, pipeline and write-up (GitHub): https://github.com/GoHumanize-ai/gohumanize-open-humanizer
+- Paper: https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md
+- Archived release with DOI (Zenodo): https://doi.org/10.5281/zenodo.22843083
+- Python client and CLI (PyPI): https://pypi.org/project/gohumanize-open-humanizer/
+- MCP server (npm): https://www.npmjs.com/package/gohumanize-open-humanizer-mcp, source: https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp
+- Training run (Weights & Biases): https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg
 
 ## Citation
 
-GoHumanize team (2026). *GoHumanize Open Humanizer: building a small text-humanization model from public-domain data.* https://gohumanize.ai/research
+GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.1.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
 
 Licences: model and code Apache-2.0; dataset CC-BY 4.0.
