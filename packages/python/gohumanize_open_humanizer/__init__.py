@@ -21,7 +21,7 @@ from importlib.metadata import PackageNotFoundError, version as _pkg_version
 try:  # the single source of truth is pyproject.toml
     __version__ = _pkg_version("gohumanize-open-humanizer")
 except PackageNotFoundError:  # running from a source checkout
-    __version__ = "0.1.2"
+    __version__ = "0.1.3"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
@@ -47,7 +47,10 @@ SYSTEM_PROMPT = (
 
 class Humanizer:
     def __init__(self, base_url: str | None = None, model: str | None = None,
-                 api_key: str | None = None, timeout: float = 120.0):
+                 api_key: str | None = None, timeout: float = 300.0):
+        # 300 s, not 120: the hosted endpoint runs on a GPU that scales to zero, and a
+        # cold start plus generation can exceed two minutes. A warm call takes a second
+        # or two, and a local endpoint is immediate.
         self.base_url = (base_url or os.getenv("OPEN_HUMANIZER_URL") or DEFAULT_URL).rstrip("/")
         self.model = model or os.getenv("OPEN_HUMANIZER_MODEL") or DEFAULT_MODEL
         self.api_key = api_key or os.getenv("OPEN_HUMANIZER_API_KEY") or ""

@@ -28,6 +28,10 @@ print(h.humanize("It is worth noting that the committee reached a consensus."))
 # installing anything, use the demo at https://gohumanize.ai/research
 ```
 
+The hosted endpoint sleeps when idle: the first request after a quiet period waits for
+a GPU cold start, one to two minutes, and later calls take a second or two. The default
+timeout is 300 seconds to allow for that.
+
 Environment variables `OPEN_HUMANIZER_URL`, `OPEN_HUMANIZER_MODEL` and
 `OPEN_HUMANIZER_API_KEY` set the same options. No dependencies beyond the
 standard library.
