@@ -7,6 +7,7 @@ DRAFT; publishing (which mints the DOI and is irreversible) is a separate,
 explicit step:
 
     python scripts/zenodo_deposit.py --create            # draft + files + metadata
+    python scripts/zenodo_deposit.py --refresh <id>      # replace files + metadata on a draft
     python scripts/zenodo_deposit.py --publish <id>      # mint the DOI
 
 Token: ~/.zenodo_token or ZENODO_TOKEN.
@@ -26,7 +27,7 @@ import requests
 
 API = "https://zenodo.org/api"
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "1.0.0"
+VERSION = "0.1.0"  # matches the PyPI and npm packages
 
 METADATA = {
     "metadata": {
@@ -76,12 +77,14 @@ def snapshot_zip(dest: Path) -> Path:
     return out
 
 
-def create(tok: str) -> None:
+def upload_all(tok: str, dep: dict) -> None:
+    """Upload the snapshot, paper and dataset files into the deposit's bucket.
+
+    Zenodo overwrites a bucket object with the same name, so re-running this on a
+    draft replaces the files in place.
+    """
     h = {"Authorization": f"Bearer {tok}"}
-    r = requests.post(f"{API}/deposit/depositions", json={}, headers=h, timeout=60)
-    r.raise_for_status()
-    dep = r.json()
-    dep_id, bucket = dep["id"], dep["links"]["bucket"]
+    bucket = dep["links"]["bucket"]
     with tempfile.TemporaryDirectory() as tmp:
         files = [snapshot_zip(Path(tmp)), ROOT / "docs" / "paper.md", ROOT / "dataset" / "train.jsonl",
                  ROOT / "dataset" / "test.jsonl", ROOT / "dataset" / "README.md"]
@@ -91,10 +94,42 @@ def create(tok: str) -> None:
                 up = requests.put(f"{bucket}/{name}", data=fh, headers=h, timeout=600)
                 up.raise_for_status()
             print("uploaded", name)
-    r = requests.put(f"{API}/deposit/depositions/{dep_id}", json=METADATA, headers=h, timeout=60)
+
+
+def set_metadata(tok: str, dep: dict) -> dict:
+    h = {"Authorization": f"Bearer {tok}"}
+    r = requests.put(f"{API}/deposit/depositions/{dep['id']}", json=METADATA, headers=h, timeout=60)
     r.raise_for_status()
-    print(json.dumps({"deposition_id": dep_id, "draft_url": dep["links"]["html"],
-                      "prereserved_doi": r.json().get("metadata", {}).get("prereserve_doi", {}).get("doi")}, indent=2))
+    out = r.json()
+    print(json.dumps({"deposition_id": dep["id"], "draft_url": dep["links"]["html"],
+                      "version": out.get("metadata", {}).get("version"),
+                      "prereserved_doi": out.get("metadata", {}).get("prereserve_doi", {}).get("doi")}, indent=2))
+    return out
+
+
+def create(tok: str) -> None:
+    h = {"Authorization": f"Bearer {tok}"}
+    r = requests.post(f"{API}/deposit/depositions", json={}, headers=h, timeout=60)
+    r.raise_for_status()
+    dep = r.json()
+    upload_all(tok, dep)
+    set_metadata(tok, dep)
+
+
+def refresh(tok: str, dep_id: int) -> None:
+    """Replace the files and metadata on an existing, still unpublished draft."""
+    h = {"Authorization": f"Bearer {tok}"}
+    r = requests.get(f"{API}/deposit/depositions/{dep_id}", headers=h, timeout=60)
+    r.raise_for_status()
+    dep = r.json()
+    if dep.get("submitted"):
+        sys.exit(f"deposit {dep_id} is already published; make a new version instead")
+    # Files from an earlier run under a different name would otherwise linger.
+    for f in dep.get("files", []):
+        requests.delete(f["links"]["self"], headers=h, timeout=60).raise_for_status()
+        print("removed", f["filename"])
+    upload_all(tok, dep)
+    set_metadata(tok, dep)
 
 
 def publish(tok: str, dep_id: int) -> None:
@@ -108,7 +143,13 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--create", action="store_true")
+    g.add_argument("--refresh", type=int, metavar="DEPOSITION_ID")
     g.add_argument("--publish", type=int, metavar="DEPOSITION_ID")
     a = ap.parse_args()
     t = token()
-    create(t) if a.create else publish(t, a.publish)
+    if a.create:
+        create(t)
+    elif a.refresh:
+        refresh(t, a.refresh)
+    else:
+        publish(t, a.publish)
