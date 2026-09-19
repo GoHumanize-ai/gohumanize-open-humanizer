@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.9"
 authors = [{ name = "GoHumanize team" }]
-keywords = ["humanizer", "text-rewriting", "open-model", "gohumanize"]
+keywords = ["humanizer", "ai-humanizer", "humanize", "humanize-text", "humanize-ai-text", "text-rewriting", "rewriter", "rewrite", "paraphrase", "paraphraser", "style-transfer", "writing-assistant", "ai-writing", "editing", "prose", "natural-language", "open-model", "open-source-model", "qwen3", "lora", "fine-tune", "llm", "llm-tools", "ai-tools", "ai-assistant", "gohumanize"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Topic :: Text Processing :: Linguistic",
