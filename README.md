@@ -1,5 +1,12 @@
 # GoHumanize Open Humanizer
 
+[![Model on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-model-yellow)](https://huggingface.co/gohumanize/gohumanize-open-humanizer)
+[![Dataset on Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-dataset-yellow)](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset)
+[![PyPI](https://img.shields.io/pypi/v/gohumanize-open-humanizer)](https://pypi.org/project/gohumanize-open-humanizer/)
+[![npm](https://img.shields.io/npm/v/gohumanize-open-humanizer-mcp)](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22843083.svg)](https://doi.org/10.5281/zenodo.22843083)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
 An open, educational text-humanization model: a **Qwen3-4B** fine-tune (Apache-2.0)
 that rewrites AI-styled English prose into more natural human writing. Trained on
 2,000 pairs built from 47 public-domain books (Project Gutenberg), in 22 minutes on
@@ -9,8 +16,8 @@ This repository is the complete, reproducible pipeline: sourcing and cleaning th
 text, creating the AI-styled inputs, training, evaluation, serving, and the write-up
 that explains every step and every service used.
 
-| | |
-|---|---|
+| Resource | Where |
+| --- | --- |
 | Write-up (paper) | [`docs/paper.md`](docs/paper.md) |
 | Model weights, LoRA and GGUF | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Model card | [`docs/model-card.md`](docs/model-card.md) |
