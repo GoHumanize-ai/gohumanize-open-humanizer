@@ -27,7 +27,7 @@ AI-styled English prose into natural human writing. Each pair is:
 The human side is the target. A model trained on this data learns the reverse direction:
 from AI-styled prose back to the human original.
 
-Built for the [GoHumanize Open Humanizer](https://gohumanize.ai/research), an educational
+Built for the [GoHumanize Open Humanizer](https://gohumanize.ai/open-model), an educational
 open model. It is separate from the production systems of GoHumanize.ai and makes no claim
 about AI detectors.
 
@@ -55,7 +55,7 @@ Dataset licence: **CC-BY 4.0**. Please cite as:
 
 | Resource | Link |
 | --- | --- |
-| Project page and browser demo | [gohumanize.ai/research](https://gohumanize.ai/research) |
+| Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | Model weights, LoRA adapter, GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Dataset, 2,200 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |

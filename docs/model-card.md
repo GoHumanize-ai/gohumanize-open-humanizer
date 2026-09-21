@@ -32,7 +32,7 @@ architecture, data, configuration or performance of the production systems,
 and **it makes no claim about AI detectors**.
 
 Everything about the project (dataset, code, evaluation, write-up):
-https://gohumanize.ai/research
+https://gohumanize.ai/open-model
 
 ## Use
 
@@ -59,7 +59,7 @@ print(tok.decode(out[0][ids.shape[1]:], skip_special_tokens=True))
 Also available: a GGUF build in `gguf/` for Ollama / LM Studio / llama.cpp, an
 MCP server (`npx gohumanize-open-humanizer-mcp`), a Python client
 (`pip install gohumanize-open-humanizer`) and a browser demo at
-https://gohumanize.ai/research.
+https://gohumanize.ai/open-model.
 
 ## Training
 
@@ -107,7 +107,7 @@ target. They are not detector scores.
 
 | Resource | Link |
 | --- | --- |
-| Project page and browser demo | [gohumanize.ai/research](https://gohumanize.ai/research) |
+| Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | Model weights, LoRA adapter, GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Dataset, 2,200 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |

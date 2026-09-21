@@ -36,7 +36,7 @@ ENDPOINT_HELP = (
     "  ollama pull hf.co/gohumanize/gohumanize-open-humanizer:Q4_K_M\n"
     '  Humanizer(base_url="http://localhost:11434/v1", '
     'model="hf.co/gohumanize/gohumanize-open-humanizer:Q4_K_M")\n'
-    "or pass api_key=..., or try the model in a browser at https://gohumanize.ai/research"
+    "or pass api_key=..., or try the model in a browser at https://gohumanize.ai/open-model"
 )
 SYSTEM_PROMPT = (
     "Rewrite the following text so that it reads as if a person wrote it: varied sentence "

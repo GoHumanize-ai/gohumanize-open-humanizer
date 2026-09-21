@@ -13,4 +13,4 @@ short_description: Open Qwen3-4B fine-tune that rewrites AI-styled text
 
 Browser demo for the GoHumanize Open Humanizer. The Space calls the model's
 OpenAI-compatible endpoint; set `OPEN_HUMANIZER_URL` and `OPEN_HUMANIZER_API_KEY`
-as Space secrets. Model, dataset, code and write-up: https://gohumanize.ai/research
+as Space secrets. Model, dataset, code and write-up: https://gohumanize.ai/open-model

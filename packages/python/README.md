@@ -25,7 +25,7 @@ print(h.humanize("It is worth noting that the committee reached a consensus."))
 
 # Humanizer() with no arguments points at the endpoint behind the browser demo,
 # which is rate-limited and needs OPEN_HUMANIZER_API_KEY. To try the model without
-# installing anything, use the demo at https://gohumanize.ai/research
+# installing anything, use the demo at https://gohumanize.ai/open-model
 ```
 
 The hosted endpoint sleeps when idle: the first request after a quiet period waits for
@@ -43,7 +43,7 @@ of GoHumanize.ai and makes no claim about AI detectors.
 
 | Resource | Link |
 | --- | --- |
-| Project page and browser demo | [gohumanize.ai/research](https://gohumanize.ai/research) |
+| Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | Model weights, LoRA adapter, GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Dataset, 2,200 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |

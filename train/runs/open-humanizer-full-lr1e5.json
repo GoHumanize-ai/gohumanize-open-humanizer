@@ -1,0 +1,24 @@
+{
+  "base_model": "Qwen/Qwen3-4B",
+  "method": "full",
+  "epochs": 2,
+  "learning_rate": 1e-05,
+  "lora_rank": null,
+  "max_seq_length": 1024,
+  "effective_batch": 16,
+  "train_rows": 2000,
+  "test_rows": 200,
+  "train_loss": 1.3672109336853027,
+  "eval_loss": 1.40958833694458,
+  "train_runtime_s": 329.8665,
+  "gpu": "NVIDIA H100 80GB HBM3",
+  "wandb_url": "https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/0p3x07ud",
+  "library_versions": {
+    "torch": "2.12.1+cu130",
+    "transformers": "5.5.0",
+    "trl": "0.24.0",
+    "peft": "0.21.0",
+    "unsloth": "2026.9.6",
+    "bitsandbytes": "0.50.2"
+  }
+}
