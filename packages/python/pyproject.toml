@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gohumanize-open-humanizer"
-version = "0.1.3"
+version = "0.1.4"
 description = "Client and CLI for the GoHumanize Open Humanizer, an open Qwen3-4B fine-tune that rewrites AI-styled text into natural prose"
 readme = "README.md"
 license = "Apache-2.0"
