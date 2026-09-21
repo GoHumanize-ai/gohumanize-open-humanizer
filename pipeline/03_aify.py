@@ -7,8 +7,9 @@ The rewrite becomes the model INPUT; the original human passage stays the
 TARGET. The fine-tuned model therefore learns the reverse direction:
 AI-styled prose -> the human original.
 
-Generators are mixed (OpenAI + Google, and Anthropic when a key is set) so
-the model does not learn the quirks of one provider. Several style prompts
+Generators are mixed (OpenAI gpt-4o-mini, Meta Llama 3.3 70B and DeepSeek, with
+Gemini and Claude as optional extras) so the model does not learn the quirks of
+one model family. Several style prompts
 are rotated for the same reason. Results are cached per passage id, so the
 script can be re-run safely.
 
@@ -67,9 +68,9 @@ STYLES = {
 }
 
 # Gemini free tier allows 20 requests/day, so it is kept only as an optional generator.
-PROVIDER_WEIGHTS = {"openai": 0.5, "openrouter": 0.25, "deepseek": 0.25, "gemini": 0.0, "anthropic": 0.0}
+PROVIDER_WEIGHTS = {"openai": 0.5, "llama": 0.25, "deepseek": 0.25, "gemini": 0.0, "anthropic": 0.0}
 MODELS = {"openai": "gpt-4o-mini", "gemini": "gemini-2.5-flash", "anthropic": "claude-haiku-4-5",
-          "openrouter": "meta-llama/llama-3.3-70b-instruct", "deepseek": "deepseek-chat"}
+          "llama": "meta-llama/llama-3.3-70b-instruct", "deepseek": "deepseek-chat"}
 
 
 def call_openai(prompt: str, text: str) -> str:
@@ -94,8 +95,11 @@ def _openai_compatible(base_url: str, key_env: str, model: str, prompt: str, tex
     return r.choices[0].message.content or ""
 
 
-def call_openrouter(prompt: str, text: str) -> str:
-    return _openai_compatible("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY", MODELS["openrouter"], prompt, text)
+def call_llama(prompt: str, text: str) -> str:
+    # Llama 3.3 70B is open weights and served by many hosts; point LLAMA_BASE_URL at any
+    # OpenAI-compatible one (or a local vLLM) and set LLAMA_MODEL if it uses another name.
+    return _openai_compatible(os.environ["LLAMA_BASE_URL"], "LLAMA_API_KEY",
+                              os.environ.get("LLAMA_MODEL", MODELS["llama"]), prompt, text)
 
 
 def call_deepseek(prompt: str, text: str) -> str:
@@ -139,7 +143,7 @@ GEMINI_LOCK = threading.Lock()
 _gemini_last = 0.0
 
 CALLERS = {"openai": call_openai, "gemini": call_gemini, "anthropic": call_anthropic,
-           "openrouter": call_openrouter, "deepseek": call_deepseek}
+           "llama": call_llama, "deepseek": call_deepseek}
 
 
 def clean_output(s: str) -> str:
