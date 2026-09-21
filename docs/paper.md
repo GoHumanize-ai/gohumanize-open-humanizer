@@ -4,13 +4,15 @@
 
 ## Abstract
 
-We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B with QLoRA in 22 minutes on a single rented GPU, for about one dollar. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
+We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B with QLoRA in 22 minutes on a single rented GPU, for about one dollar, and trained a full fine-tune of all four billion weights for comparison, which gave no measurable gain. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
 
 ## 1. Purpose and scope
 
 The GoHumanize Open Humanizer is a public research and educational model created to demonstrate the general approach used to develop AI text humanization systems. It is separate from the production models used by GoHumanize.ai, but it reflects many of the same high-level principles we follow when developing our technology, including careful dataset preparation, transformation of source text into training pairs, model fine-tuning, evaluation, and iterative improvement.
 
 By publishing the model, dataset, code, methodology, and development process, we aim to provide developers and researchers with a practical example of how a humanization model can be built and studied. The open model is not intended to reproduce the exact architecture, datasets, training configuration, or performance of GoHumanize.ai's production systems.
+
+The write-up is aimed at developers who have not fine-tuned a model before. Each section explains not only what we did but why we chose it over the alternatives, and terms are explained as they come up. If you only want to run the model, the links at the end are enough; if you want to build something similar, read on.
 
 Two boundaries are deliberate:
 
@@ -45,13 +47,42 @@ From the candidates we drew 2,000 training passages and 200 test passages (`pipe
 
 ### 3.4 AI-fication: creating the input side
 
-For each passage we asked a large language model to rewrite it "so that it reads like typical output of a large language model", keeping every fact, name and the order of ideas, and roughly the same length (`pipeline/03_aify.py`). Two choices matter here.
+**Why this step exists.** To teach a model to turn AI-styled text into human text, we need pairs: an AI-styled passage and the human version of the same passage. Human text is easy to find. The matching AI version does not exist anywhere, so we make it: we take each human passage and ask a large language model to rewrite it in the style LLMs typically write in. That rewrite becomes the training input, and the untouched human original is the answer the model has to learn to produce. We call this AI-fication. The direction matters: the target is always real human writing, never an LLM's imitation of it.
 
-**Several generators, not one.** If all inputs came from one model, the humanizer would learn that model's habits rather than the general LLM register. We used three, chosen for cost and variety: OpenAI's gpt-4o-mini (1,009 training rows), Meta's Llama 3.3 70B through OpenRouter (504) and DeepSeek-chat (487). We had also planned to use Google Gemini and Anthropic Claude; the Gemini free tier allows 20 requests per day, and our Anthropic key was not active, so both were left out. The code keeps them as optional generators.
+**How one passage is AI-fied** (`pipeline/03_aify.py`), step by step:
 
-**Several style prompts.** Four prompts rotate across rows: formal and polished, neutral explanatory, hedged assistant tone, and clean corporate prose. Each describes the register in concrete terms (expand contractions, prefer general vocabulary, even out sentence length, open with connectives, add a summarising sentence). The prompt name is stored with each row.
+1. Pick a generator at random, with weights: gpt-4o-mini 50%, Llama 3.3 70B 25%, DeepSeek-chat 25%. The random seed is fixed (13), so a re-run makes the same choices.
+2. Pick one of four style prompts, in rotation, so each style covers a quarter of the rows.
+3. Send the passage with a fixed system instruction and the style prompt, at temperature 0.8. Temperature controls randomness; 0.8 gives some variety so the same instruction does not produce identical phrasing every time.
+4. Clean the answer (strip preambles such as "Here is the rewritten passage:" and wrapping quotes) and check it. Reject it if it is shorter than 60% or longer than 160% of the original word count, or looks like markdown or a list. On a rejection or an API error, retry up to five times, waiting longer after rate-limit errors.
+5. Save the pair straight away to a JSONL file together with the generator and style names. The script skips ids already in the file, so it can be stopped and resumed without paying twice.
 
-Outputs were rejected and regenerated if they were shorter than 60% or longer than 160% of the original, or came back as markdown or a list. About 1% of rows needed a second generator after five failed attempts, typically because Llama compressed a long literary passage too much. Generating all 2,200 pairs cost roughly one US dollar across the three providers and took 20 minutes with eight parallel requests.
+The system instruction is the same for every call:
+
+> You rewrite passages so that they read like typical output of a large language model. Keep every fact, event, name and the order of ideas. Keep roughly the same length (within 20 percent). Do not add headings, lists, quotation marks around the whole text, commentary, or a preamble. Return only the rewritten passage.
+
+"Keep every fact, event, name and the order of ideas" is the important line. If the AI version dropped or invented content, the humanizer would learn to drop or invent content too. We want it to learn only the change of *style*.
+
+**Four style prompts.** Each describes one flavour of LLM prose in concrete, checkable terms:
+
+| Style | What it asks the generator to do | Training rows |
+|---|---|---|
+| `formal_polished` | expand contractions, prefer general vocabulary, even out sentence length, open sentences with "Additionally", "Furthermore", "It is worth noting that" | 498 |
+| `explanatory` | plain neutral explanation, framing such as "This highlights" or "Ultimately", remove dialect and odd phrasing | 503 |
+| `hedged_helpful` | soften claims ("may", "tends to"), swap vivid or old words for common modern ones, end with a tidy summarising sentence | 497 |
+| `corporate_clean` | short paragraphs, consistent sentence length, generic adjectives, transition words, no contractions or fragments | 502 |
+
+With one prompt the model would learn to undo one pattern. Four prompts cover the main registers people actually paste into a humanizer.
+
+**Three generators, and why these.** If every input came from one model, the humanizer would learn to undo that model's particular habits (its favourite words, its sentence shapes) rather than LLM style in general. So we mixed three model families from three different labs:
+
+- **OpenAI gpt-4o-mini** (1,009 training rows): the style most people recognise as "ChatGPT writing", reliable and very cheap. It got the largest share for that reason.
+- **Meta Llama 3.3 70B Instruct** (504 rows): an open-weights model with a different training recipe and different habits. Many hosts serve it through an OpenAI-compatible API, and you can also run it yourself; the script only needs a base URL and key.
+- **DeepSeek-chat** (487 rows): a third, independent family with its own phrasing, also very cheap.
+
+AI-fication does not need the strongest available model, only typical ones, because the goal is typical LLM prose. We had planned to add Google Gemini and Anthropic Claude as well; the Gemini free tier allowed only 20 requests per day and our Anthropic key was not active at the time, so both were left out. The code keeps them as optional generators (give them a weight above zero).
+
+**Numbers.** About 1% of rows failed five times with their first generator, typically because Llama compressed a long literary passage too much, and were redone with another. Generating all 2,200 pairs cost roughly one US dollar and took about 20 minutes with eight parallel requests.
 
 ### 3.5 What the pairs look like
 
@@ -69,13 +100,57 @@ The dataset is published as JSONL and CSV with a card describing sources, licenc
 
 ## 4. Model and training
 
-### 4.1 Base model
+**Terms used in this section.**
 
-We fine-tuned **Qwen3-4B**, a 4-billion-parameter open model released under Apache-2.0. A model this size is a deliberate choice for an educational release: it trains on one consumer-class GPU in minutes, runs on a laptop after quantisation, and is small enough that anyone can repeat the experiment. It is not the size one would choose for the best possible quality.
+- *Parameter* (or *weight*): one of the numbers inside a model, learned during its original training. Qwen3-4B has about four billion.
+- *Fine-tuning*: continuing the training of an existing model on a small, specific dataset so that it picks up one new behaviour.
+- *Token*: the unit a model reads and writes, roughly three quarters of an English word.
+- *Loss*: a number that says how badly the model predicts the target text. Training is the process of making it smaller.
+- *Step, batch, epoch*: one step updates the weights using a batch of examples (16 here). An epoch is one pass through all 2,000 training examples, which is 125 steps.
+- *Learning rate*: how big each update is. Too big and training becomes unstable; too small and the model barely changes.
+- *Held-out (test) set*: examples kept aside and never trained on, used to check that the model learned the skill rather than memorised the examples.
+- *Quantisation*: storing each weight in fewer bits (4 instead of 16) to save memory, at a small cost in precision.
+
+### 4.1 Choosing the base model: why Qwen3-4B
+
+Fine-tuning starts from a model that already writes good English and teaches it one new habit. The first decision is which model to start from. Three questions settled it.
+
+**Why an open model, and not OpenAI's fine-tuning?** OpenAI offers fine-tuning of its own models, and it would have been the quickest way to get a working humanizer. We did not use it, because the result could not be an open release:
+
+- The weights stay on OpenAI's servers. We could not publish them, and nobody could download, inspect or run the model on their own machine.
+- Every use is billed per token for as long as the model exists, and only while OpenAI keeps offering that model version.
+- Nobody could reproduce the training, because the fine-tuning process itself is not visible.
+
+The point of this project is that a developer can repeat every step and own the result, so the base had to be a model with open weights and a permissive licence. OpenAI's models were still useful as one of the AI-fication generators, where they only produce data.
+
+**Why 4 billion parameters, and not a bigger model?** Memory is the constraint that decides almost everything in fine-tuning, and it grows with the parameter count. Rough memory for the weights alone:
+
+| Model size | 16-bit weights | 4-bit weights | In practice |
+|---|---|---|---|
+| **4B (ours)** | ~8 GB | ~2.5 GB | trains on one 24 GB GPU in minutes; runs on a laptop |
+| 8B | ~16 GB | ~5 GB | trains on 24 GB with QLoRA; about twice the time and serving cost |
+| 14B | ~28 GB | ~9 GB | needs a larger GPU to train comfortably |
+| 32B | ~64 GB | ~19 GB | needs an 80 GB GPU and hours of training; expensive to serve |
+| 70B | ~140 GB | ~40 GB | needs several GPUs |
+
+Training needs more than the weights (the adapter, the optimizer state, and the intermediate values of each batch); our QLoRA run peaked at 8.6 GB on a 24 GB card (section 4.5). Three reasons made the smallest sensible size the right one:
+
+1. **The task does not need knowledge.** A humanizer does not have to know facts: everything it needs is in the input text. It needs fluent English and the ability to follow a style. Larger models mostly add knowledge and reasoning, which this task does not use, and section 5 shows that a 4B model learns the style shift well.
+2. **Anyone can repeat it.** A 4B model trains in about 22 minutes for about a dollar. A 32B model would take several hours on an 80 GB GPU and cost tens of dollars per attempt, and every failed attempt (section 4.4) would cost the same again.
+3. **Anyone can run it.** The 4-bit GGUF build is about 2.5 GB and runs in Ollama or LM Studio on an ordinary laptop, and the hosted demo needs only a mid-range GPU.
+
+For a production system where quality matters more than cost, a larger base model would be worth testing. That is outside the purpose of this release.
+
+**Why Qwen3-4B among the small models?** Several open models exist around this size, for example Llama 3.2 3B, Gemma 3 4B and Phi-4-mini. We chose Qwen3-4B because of:
+
+- **Licence.** Apache-2.0, a standard permissive licence, so the fine-tuned model can be released under Apache-2.0 as well. Llama and Gemma come with their own custom licence terms that a derived model has to carry.
+- **Quality for its size.** At release it was among the strongest open models in its size class, and its English is fluent.
+- **Tooling.** First-class support in Unsloth (fast, memory-efficient training), vLLM (serving) and llama.cpp (GGUF builds for laptops), all of which we use.
+- **Switchable "thinking".** Qwen3 can reason step by step before answering. For a rewrite that only adds delay and cost, and the chat template lets us switch it off cleanly, which we do.
 
 ### 4.2 QLoRA with Unsloth
 
-Rather than updating all four billion weights, which would need far more GPU memory, we used **QLoRA**: the base model is loaded quantised to 4 bits and kept frozen, and a small set of trainable low-rank matrices (a **LoRA** adapter, rank 16, alpha 32) is added to every attention and MLP projection. Only the adapter is trained, then merged back into a full-precision copy of the base for serving. **Unsloth** is a library that implements this efficiently; it wraps Hugging Face's `transformers` and the **TRL** `SFTTrainer`.
+Rather than updating all four billion weights, which would need far more GPU memory, we used **QLoRA**: the base model is loaded quantised to 4 bits and kept frozen, and a small set of trainable low-rank matrices (a **LoRA** adapter, rank 16, alpha 32) is added to every attention and MLP projection. Only the adapter is trained, then merged back into a full-precision copy of the base for serving. In our case the adapter is about 33 million parameters, under 1% of the model. The idea behind LoRA is that adapting a model to a new style needs a small, low-dimensional change, not a new model; section 5.4 tests that idea by training all the weights instead. **Unsloth** is a library that implements this efficiently; it wraps Hugging Face's `transformers` and the **TRL** `SFTTrainer`.
 
 Each pair is rendered with the Qwen3 chat template: a fixed system prompt ("Rewrite the following text so that it reads as if a person wrote it: varied sentence length, concrete wording, natural rhythm, no filler transitions. Keep the meaning, the facts and the order of ideas. Return only the rewritten text."), the AI-styled text as the user turn and the human original as the assistant turn, with Qwen3's thinking mode disabled. The loss is computed only on the assistant turn, so the model is trained to produce the human text, not to reproduce the prompt.
 
@@ -95,7 +170,7 @@ Each pair is rendered with the Qwen3 chat template: a fixed system prompt ("Rewr
 | Wall-clock | 21.7 minutes of training, plus model download and merge |
 | Cost | about $1 of GPU time |
 | Software | torch 2.12.1, transformers 5.5.0, trl 0.24.0, peft 0.21.0, unsloth 2026.9.6, bitsandbytes 0.50.2 |
-| Result | training loss 1.30, evaluation loss 1.39 (3.17 before training) |
+| Result | training loss 1.30 averaged over the run (about 1.13 in the last steps), evaluation loss 1.39 (3.17 before training) |
 | Tracking | Weights & Biases run `95wi8tdg` in project `gohumanize/gohumanize-open-humanizer` |
 
 The evaluation loss fell from 3.17 (base model, measured on the same pairs before training) to 1.43 after the first 50 steps and 1.39 at the end; most of the learning happens early, which is common for style tasks with a strong base model. The training script is `train/modal_train.py`.
@@ -103,6 +178,29 @@ The evaluation loss fell from 3.17 (base model, measured on the same pairs befor
 ### 4.4 A note on getting the environment right
 
 The first attempt at training failed four times before a single step ran, every time on library plumbing rather than on the data or the model: a missing local package, a file read that only works on the developer's machine, and two variants of a version clash between TRL and Unsloth (the fix was simply to import Unsloth before TRL so that its patches apply). We mention this because it is the normal experience with fast-moving ML libraries, and it is why the script supports a 3-step smoke run: spend a minute of GPU time to validate the setup before spending an hour.
+
+### 4.5 What we watched in Weights & Biases
+
+Weights & Biases (W&B) is a dashboard that records a training run while it happens. The training script needs only `report_to="wandb"` and an API key. Every 10 steps it logs the training numbers, every 50 steps it scores the 200 held-out pairs, and in the background it samples the state of the GPU. All our runs are public in the [W&B project](https://wandb.ai/gohumanize/gohumanize-open-humanizer), and each run also leaves a JSON summary in `train/runs/`. This is what each chart shows, what we saw in the QLoRA run, and what would have been a warning sign:
+
+| Chart | What it measures | What we saw | Warning sign |
+|---|---|---|---|
+| `train/loss` | how badly the model predicts the human text on the batches it trains on (lower is better) | 2.43 at step 10, 1.38 by step 20, then a slow slide to about 1.13 at step 250 | not falling (learning rate too low, or broken data); sudden spikes or `NaN` (learning rate too high) |
+| `eval/loss` | the same measure on the 200 held-out pairs, which the model never trains on | 3.17 before training, then 1.43, 1.40, 1.39, 1.40, 1.39 at steps 50 to 250 | rising while `train/loss` keeps falling: overfitting, i.e. memorising instead of learning |
+| `train/grad_norm` | the size of each update | 0.84 at the start, then settling between 0.3 and 0.6 | large spikes: unstable training |
+| `train/learning_rate` | the step size in use | up to 2e-4 over 10 warm-up steps, then a cosine curve down to zero at step 250 | a shape that does not match the configuration |
+| `train/epoch` | passes through the training set | 0 to 2 | |
+| GPU utilisation | how busy the GPU is | 93% on average | low values: the GPU is waiting for data and you pay for idle time |
+| GPU memory allocated | memory in use | peak 8.6 GB of 24 GB | near 100%: risk of an out-of-memory crash; far below: room for a bigger batch |
+| GPU temperature and power | hardware health | normal | throttling, which slows training |
+
+How we read them together:
+
+- **Most of the learning happens in the first 50 steps.** Held-out loss fell from 3.17 to 1.43 in the first fifth of training, and only to 1.39 over the remaining 200 steps. That is typical when a strong base model learns a style: it already knows English and only has to learn which way to rewrite.
+- **No overfitting.** Training loss ended near 1.13 and held-out loss at 1.39. A gap is normal, since the model has seen the training passages. What matters is that the held-out loss stayed flat through the second epoch instead of climbing back up. That is also why we stopped at two epochs: a third would cost more and risk memorisation without improving the held-out loss.
+- **What a loss of 1.39 means.** The loss is the average of the natural log of how surprised the model is by each next token of the human original. e^1.39 is about 4, so after training the model is, on average, about as unsure as someone choosing between four equally likely next words; before training it was about 24 (e^3.17). It can never reach zero, because the same idea can be phrased in many valid ways and the model cannot know which one the author picked.
+- **Comparing runs.** Because every run logs the same charts, the full fine-tune runs (section 5.4) can be laid over the QLoRA run on one plot. Their update sizes are larger (a gradient norm of about 3.5), which is expected when every weight moves, and they used 31 GB of the H100's 80 GB.
+- **The smoke run.** Before the real run we trained for 3 steps (`--max-steps 3`). It costs a minute, and in W&B it shows the starting held-out loss (3.17) and proves that logging, the GPU and the data all work.
 
 ## 5. Evaluation
 
@@ -153,7 +251,7 @@ Held-out pairs, all generated at temperature 0.7. The input is the AI-styled tex
 The pattern repeats across the test set: the base model produces clean, short, modern sentences that read like a summary; the fine-tuned model restores the sentence shapes, connectives and vocabulary of the period, occasionally too eagerly ("raiment", "to-day"), which is the flip side of training on old books.
 
 
-### 5.1 QLoRA versus full fine-tuning
+### 5.4 QLoRA versus full fine-tuning
 
 Is a full fine-tune worth it here? We trained the same model a second way, updating
 all four billion weights in bf16 instead of a rank-16 adapter on a 4-bit model, with
@@ -200,16 +298,18 @@ evaluation in `eval/results/open-humanizer-full-lr2e5.json`.
 - **Endpoint**: `serve/modal_serve.py` runs vLLM on Modal behind an OpenAI-compatible API (`/v1/chat/completions`). The container scales to zero when idle, so the demo costs nothing while unused and roughly one A10G-hour per hour of use.
 - **MCP server** (`npx gohumanize-open-humanizer-mcp`) exposes a `humanize_text` tool to AI assistants. It calls the endpoint above by default, or any OpenAI-compatible server you point it at, including a local Ollama running the GGUF.
 - **Python client** (`pip install gohumanize-open-humanizer`) with an `open-humanizer` command, same options.
-- **Browser demo** on the project page (gohumanize.ai/research): a small form that calls the endpoint through the site's own server route, so the key stays server-side. A Gradio app for a Hugging Face Space is included in `demo/` for anyone who wants to host their own copy.
+- **Browser demo** on the project page (gohumanize.ai/open-model): a small form that calls the endpoint through the site's own server route, so the key stays server-side. A Gradio app for a Hugging Face Space is included in `demo/` for anyone who wants to host their own copy.
 
 ## 7. Services used, and why
 
 | Service | Role | Why this one |
 |---|---|---|
 | Project Gutenberg | Human text | Large, free, clearly public domain, direct downloads. |
-| OpenAI, OpenRouter, DeepSeek | AI-fication | Three different model families for variety; all cheap at this volume (about $1 in total). |
+| OpenAI gpt-4o-mini, Meta Llama 3.3 70B, DeepSeek-chat | AI-fication | Three model families from three labs, so the humanizer learns LLM style in general rather than one model's habits; all cheap at this volume (about $1 in total). |
+| Qwen3-4B (Qwen team, Alibaba) | Base model | Open weights under Apache-2.0, strong for its size, small enough to train for a dollar and run on a laptop (section 4.1). |
+| Unsloth, TRL, vLLM | Training and serving libraries | Unsloth makes QLoRA fast and memory-efficient; TRL provides the supervised fine-tuning loop; vLLM serves the model behind an OpenAI-compatible API. |
 | Modal | GPU for training, evaluation and serving | Pay-per-second GPUs from a Python script, no servers to manage, scale-to-zero serving. |
-| Weights & Biases | Experiment tracking | Every run's settings and loss curves are recorded and shareable. |
+| Weights & Biases | Experiment tracking | Every run's settings, loss curves and GPU usage are recorded and public, so any number in this document can be checked (section 4.5). |
 | Hugging Face | Hosting weights and dataset | The standard place developers look for open models; free hosting for public repositories. |
 | llama.cpp | GGUF conversion | Lets the model run on CPUs and laptops. |
 | GitHub | Code and this document | |
@@ -248,7 +348,7 @@ Total cost of one full reproduction: under $5. Total time: about two hours inclu
 
 | Resource | Link |
 | --- | --- |
-| Project page and browser demo | [gohumanize.ai/research](https://gohumanize.ai/research) |
+| Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | Model weights, LoRA adapter, GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Dataset, 2,200 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |

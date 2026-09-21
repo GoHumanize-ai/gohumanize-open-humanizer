@@ -42,7 +42,7 @@ METADATA = {
             "of 2,000 training and 200 test pairs (CC-BY 4.0), the evaluation results and the paper-style "
             "write-up explaining every step and service used.</p>"
             "<p><b>Links</b></p><ul>"
-            "<li>Project page and browser demo: https://gohumanize.ai/research</li>"
+            "<li>Project page and browser demo: https://gohumanize.ai/open-model</li>"
             "<li>Model weights, LoRA adapter and GGUF builds: https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
             "<li>Dataset (CC-BY 4.0): https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset</li>"
             "<li>Code, pipeline and write-up: https://github.com/GoHumanize-ai/gohumanize-open-humanizer</li>"
@@ -63,7 +63,7 @@ METADATA = {
             {"identifier": "https://github.com/GoHumanize-ai/gohumanize-open-humanizer", "relation": "isSupplementTo", "scheme": "url"},
             {"identifier": "https://huggingface.co/gohumanize/gohumanize-open-humanizer", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset", "relation": "isSupplementedBy", "scheme": "url"},
-            {"identifier": "https://gohumanize.ai/research", "relation": "isDescribedBy", "scheme": "url"},
+            {"identifier": "https://gohumanize.ai/open-model", "relation": "isDescribedBy", "scheme": "url"},
             {"identifier": "https://pypi.org/project/gohumanize-open-humanizer/", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://www.npmjs.com/package/gohumanize-open-humanizer-mcp", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp", "relation": "isSupplementedBy", "scheme": "url"},

@@ -27,7 +27,7 @@ that explains every step and every service used.
 | Training run | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg) |
 | MCP server | [npm: gohumanize-open-humanizer-mcp](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp), [source](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) |
 | Python client | [PyPI: gohumanize-open-humanizer](https://pypi.org/project/gohumanize-open-humanizer/), source in [`packages/python`](packages/python) |
-| Project page and demo | https://gohumanize.ai/research |
+| Project page and demo | https://gohumanize.ai/open-model |
 
 Model weights, GGUF files and the dataset are published on Hugging Face under
 https://huggingface.co/gohumanize; the browser demo is on the project page.
@@ -68,7 +68,7 @@ docs/       paper, model card, notes
 ## Reproduce
 
 Requirements: Python 3.10+, a [Modal](https://modal.com) account for the GPU steps,
-API keys for the AI-fication generators (OpenAI, OpenRouter, DeepSeek), a Weights &
+API keys for the AI-fication generators (OpenAI, any OpenAI-compatible host for Llama 3.3 70B, DeepSeek), a Weights &
 Biases key and a Hugging Face token. Total cost under $5.
 
 ```bash
