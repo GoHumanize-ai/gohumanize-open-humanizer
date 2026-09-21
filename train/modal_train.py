@@ -3,17 +3,22 @@
 What happens here, in order:
   1. Modal builds a container image with the training libraries (Unsloth, TRL,
      transformers) and copies dataset/train.jsonl + dataset/test.jsonl into it.
-  2. On an A10G (24 GB) GPU the base model Qwen/Qwen3-4B is loaded in 4-bit
-     (QLoRA) and a LoRA adapter of rank 16 is trained on the pairs. The prompt
-     side (system + AI-styled input) is masked out, so the loss only covers the
-     human target text.
+  2. The base model Qwen/Qwen3-4B is trained on the pairs, one of two ways:
+       qlora (default)  on an A10G (24 GB): the model is loaded in 4-bit and only a
+                        LoRA adapter of rank 16 is trained.
+       full             on an H100 (80 GB): every weight is updated, in bf16. Needs
+                        roughly three times the memory, and a learning rate about
+                        twenty times lower.
+     Either way the prompt side (system + AI-styled input) is masked out, so the loss
+     only covers the human target text.
   3. Training metrics stream to Weights & Biases. The LoRA adapter and a merged
      16-bit copy of the model are written to a Modal volume; a later step pushes
      them to Hugging Face.
 
 Run from the repo root:
-    modal run train/modal_train.py            # train with defaults below
-    modal run train/modal_train.py --epochs 3 # override a hyperparameter
+    modal run train/modal_train.py                                   # QLoRA, defaults below
+    modal run train/modal_train.py --epochs 3                        # override a hyperparameter
+    modal run train/modal_train.py --method full --run-name open-humanizer-full-v1
 """
 
 from __future__ import annotations
@@ -72,22 +77,16 @@ def to_messages(row: dict) -> dict:
     }
 
 
-@app.function(
-    image=image,
-    gpu="A10G",
-    timeout=4 * 60 * 60,
-    volumes={REMOTE_OUT: volume},
-    secrets=secrets,
-)
-def train(
-    epochs: int = 2,
-    learning_rate: float = 2e-4,
-    lora_rank: int = 16,
-    max_seq_length: int = 1024,
-    batch_size: int = 4,
-    grad_accum: int = 4,
-    run_name: str = "open-humanizer-v1",
-    max_steps: int = -1,
+def _train(
+    method: str,
+    epochs: int,
+    learning_rate: float,
+    lora_rank: int,
+    max_seq_length: int,
+    batch_size: int,
+    grad_accum: int,
+    run_name: str,
+    max_steps: int,
 ) -> str:
     import json
     import os
@@ -104,21 +103,31 @@ def train(
     os.environ["WANDB_PROJECT"] = "gohumanize-open-humanizer"
     wandb.login(key=os.environ["WANDB_API_KEY"])
 
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=BASE_MODEL,
-        max_seq_length=max_seq_length,
-        load_in_4bit=True,
-        dtype=torch.bfloat16,
-    )
-    model = FastLanguageModel.get_peft_model(
-        model,
-        r=lora_rank,
-        lora_alpha=lora_rank * 2,
-        lora_dropout=0.0,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
-        use_gradient_checkpointing="unsloth",
-        random_state=13,
-    )
+    if method == "full":
+        # All 4B weights in bf16 and trainable; no adapter.
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=BASE_MODEL,
+            max_seq_length=max_seq_length,
+            load_in_4bit=False,
+            full_finetuning=True,
+            dtype=torch.bfloat16,
+        )
+    else:
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=BASE_MODEL,
+            max_seq_length=max_seq_length,
+            load_in_4bit=True,
+            dtype=torch.bfloat16,
+        )
+        model = FastLanguageModel.get_peft_model(
+            model,
+            r=lora_rank,
+            lora_alpha=lora_rank * 2,
+            lora_dropout=0.0,
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+            use_gradient_checkpointing="unsloth",
+            random_state=13,
+        )
 
     ds = load_dataset("json", data_files={"train": f"{REMOTE_DATA}/train.jsonl",
                                           "test": f"{REMOTE_DATA}/test.jsonl"})
@@ -171,6 +180,9 @@ def train(
             report_to="wandb",
             run_name=run_name,
             seed=13,
+            # Full fine-tuning: recompute activations instead of storing them, and keep
+            # the AdamW state in 8 bits (about 8 GB instead of 32 GB for 4B weights).
+            **({"gradient_checkpointing": True, "optim": "adamw_8bit"} if method == "full" else {}),
         ),
     )
     # Qwen3 chat template markers: loss only on the assistant turn.
@@ -183,8 +195,9 @@ def train(
     result = trainer.train()
     metrics = trainer.evaluate()
     summary = {
-        "base_model": BASE_MODEL,
-        "epochs": epochs, "learning_rate": learning_rate, "lora_rank": lora_rank,
+        "base_model": BASE_MODEL, "method": method,
+        "epochs": epochs, "learning_rate": learning_rate,
+        "lora_rank": lora_rank if method == "qlora" else None,
         "max_seq_length": max_seq_length, "effective_batch": batch_size * grad_accum,
         "train_rows": len(ds["train"]), "test_rows": len(ds["test"]),
         "train_loss": result.training_loss, "eval_loss": metrics.get("eval_loss"),
@@ -195,9 +208,15 @@ def train(
                              ("torch", "transformers", "trl", "peft", "unsloth", "bitsandbytes")},
     }
 
-    model.save_pretrained(f"{out_dir}/lora")
-    tokenizer.save_pretrained(f"{out_dir}/lora")
-    model.save_pretrained_merged(f"{out_dir}/merged-16bit", tokenizer, save_method="merged_16bit")
+    if method == "full":
+        # The trained model is already the whole model. Saved under the same folder name
+        # as a merged QLoRA run, so evaluation, serving and publishing work unchanged.
+        model.save_pretrained(f"{out_dir}/merged-16bit")
+        tokenizer.save_pretrained(f"{out_dir}/merged-16bit")
+    else:
+        model.save_pretrained(f"{out_dir}/lora")
+        tokenizer.save_pretrained(f"{out_dir}/lora")
+        model.save_pretrained_merged(f"{out_dir}/merged-16bit", tokenizer, save_method="merged_16bit")
     with open(f"{out_dir}/train_summary.json", "w") as f:
         json.dump(summary, f, indent=2)
     volume.commit()
@@ -205,8 +224,32 @@ def train(
     return json.dumps(summary, indent=2)
 
 
+@app.function(image=image, gpu="A10G", timeout=4 * 60 * 60, volumes={REMOTE_OUT: volume}, secrets=secrets)
+def train(epochs: int = 2, learning_rate: float = 2e-4, lora_rank: int = 16, max_seq_length: int = 1024,
+          batch_size: int = 4, grad_accum: int = 4, run_name: str = "open-humanizer-v1",
+          max_steps: int = -1) -> str:
+    """QLoRA on an A10G: the setup behind the published v1 model."""
+    return _train("qlora", epochs, learning_rate, lora_rank, max_seq_length, batch_size,
+                  grad_accum, run_name, max_steps)
+
+
+@app.function(image=image, gpu="H100", timeout=4 * 60 * 60, volumes={REMOTE_OUT: volume}, secrets=secrets)
+def train_full(epochs: int = 2, learning_rate: float = 1e-5, max_seq_length: int = 1024,
+               batch_size: int = 4, grad_accum: int = 4, run_name: str = "open-humanizer-full-v1",
+               max_steps: int = -1) -> str:
+    """Full fine-tuning on an H100: every weight updated, same data and batch as QLoRA."""
+    return _train("full", epochs, learning_rate, 0, max_seq_length, batch_size, grad_accum,
+                  run_name, max_steps)
+
+
 @app.local_entrypoint()
-def main(epochs: int = 2, learning_rate: float = 2e-4, lora_rank: int = 16,
-         run_name: str = "open-humanizer-v1", max_steps: int = -1):
-    print(train.remote(epochs=epochs, learning_rate=learning_rate, lora_rank=lora_rank,
-                       run_name=run_name, max_steps=max_steps))
+def main(method: str = "qlora", epochs: int = 2, learning_rate: float = 0.0, lora_rank: int = 16,
+         run_name: str = "", max_steps: int = -1):
+    if method not in ("qlora", "full"):
+        raise SystemExit("--method must be qlora or full")
+    if method == "full":
+        print(train_full.remote(epochs=epochs, learning_rate=learning_rate or 1e-5,
+                                run_name=run_name or "open-humanizer-full-v1", max_steps=max_steps))
+    else:
+        print(train.remote(epochs=epochs, learning_rate=learning_rate or 2e-4, lora_rank=lora_rank,
+                           run_name=run_name or "open-humanizer-v1", max_steps=max_steps))

@@ -152,6 +152,48 @@ Held-out pairs, all generated at temperature 0.7. The input is the AI-styled tex
 
 The pattern repeats across the test set: the base model produces clean, short, modern sentences that read like a summary; the fine-tuned model restores the sentence shapes, connectives and vocabulary of the period, occasionally too eagerly ("raiment", "to-day"), which is the flip side of training on old books.
 
+
+### 5.1 QLoRA versus full fine-tuning
+
+Is a full fine-tune worth it here? We trained the same model a second way, updating
+all four billion weights in bf16 instead of a rank-16 adapter on a 4-bit model, with
+the same data, two epochs and effective batch of 16. Full fine-tuning needs roughly
+three times the GPU memory, so it ran on an H100 (80 GB) rather than the A10G, with
+8-bit AdamW and gradient checkpointing (`train/modal_train.py --method full`).
+
+The learning rate is the one setting that has to change: a full fine-tune moves every
+weight, so it wants something like one tenth to one twentieth of the LoRA rate. At
+1e-5 the model was still improving when training ended (held-out loss 1.410, worse
+than QLoRA's 1.391); at 2e-5 it levelled off at 1.381, the best of the three.
+
+That run was then evaluated exactly like the QLoRA model, on the same 200 held-out
+pairs, with the base model regenerated under the same seed (it scored 0.8998 against
+0.8997 the first time, so the two evaluations are comparable):
+
+| Measure | Base Qwen3-4B | QLoRA | Full fine-tune | Human |
+|---|---|---|---|---|
+| BERTScore F1 vs human | 0.900 | **0.921** | 0.920 | |
+| ROUGE-L vs human | 0.424 | **0.540** | 0.535 | |
+| Names kept (recall) | 0.594 | **0.623** | 0.614 | |
+| Length ratio vs human | 0.83 | 0.93 | **0.95** | 1.00 |
+| Stock LLM phrases / text | 0.01 | **0.00** | **0.00** | 0.00 |
+| Average sentence length | 15.2 | 22.5 | 22.6 | 28.1 |
+
+The two are indistinguishable. The differences are of the order of 0.001 in BERTScore
+and 0.005 in ROUGE-L, in both directions, which on 200 pairs is noise; the full
+fine-tune's slightly lower held-out loss did not become better rewrites. This is the
+usual outcome for style transfer with a small dataset: 2,000 pairs are not enough
+signal to need more than a low-rank update, and the adapter captures what there is
+to learn.
+
+For this task QLoRA is the better choice. It matches the quality, trains on a 24 GB
+GPU for about a dollar where the full fine-tune needs an 80 GB one, and produces a
+small adapter as well as merged weights. A full fine-tune becomes worth trying with
+much more data, or when the task needs the model to learn new knowledge rather than
+a new register. The run records are in `train/runs/`
+(`open-humanizer-full-lr1e5.json`, `open-humanizer-full-lr2e5.json`) and the
+evaluation in `eval/results/open-humanizer-full-lr2e5.json`.
+
 ## 6. Serving and integration
 
 - **Weights** are on Hugging Face: merged 16-bit safetensors, the LoRA adapter, and GGUF files (Q4_K_M and Q8_0) built with llama.cpp so the model runs locally in Ollama, LM Studio or llama.cpp.
