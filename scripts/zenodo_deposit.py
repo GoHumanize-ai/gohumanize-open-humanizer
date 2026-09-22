@@ -36,14 +36,15 @@ METADATA = {
         "upload_type": "software",
         "description": (
             "<p>The GoHumanize Open Humanizer is a public research and educational model: a Qwen3-4B "
-            "fine-tune (QLoRA) that rewrites AI-styled English prose into more natural human writing. "
+            "fine-tune that rewrites AI-styled English prose into more natural human writing. "
             "This record archives the complete pipeline (Project Gutenberg sourcing and cleaning, "
             "AI-fication of inputs with three generators, training, evaluation, serving), the dataset "
             "of 2,000 training and 200 test pairs (CC-BY 4.0), the evaluation results and the paper-style "
             "write-up explaining every step and service used.</p>"
             "<p><b>Links</b></p><ul>"
             "<li>Project page and browser demo: https://gohumanize.ai/open-model</li>"
-            "<li>Model weights, LoRA adapter and GGUF builds: https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
+            "<li>Model weights and GGUF builds (full fine-tune): https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
+            "<li>QLoRA version and LoRA adapter: https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora</li>"
             "<li>Dataset (CC-BY 4.0): https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset</li>"
             "<li>Code, pipeline and write-up: https://github.com/GoHumanize-ai/gohumanize-open-humanizer</li>"
             "<li>Paper: https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md</li>"

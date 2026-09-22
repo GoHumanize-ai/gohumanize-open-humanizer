@@ -10,8 +10,9 @@ Runs on Modal because the weights live on the Modal volume. Two functions:
               in Ollama / LM Studio / llama.cpp.
 
 Run:
-    modal run train/push_to_hub.py::push --run-name open-humanizer-v1 --repo GoHumanize-ai/gohumanize-open-humanizer
-    modal run train/push_to_hub.py::gguf --run-name open-humanizer-v1 --repo GoHumanize-ai/gohumanize-open-humanizer
+    modal run train/push_to_hub.py::push --run-name open-humanizer-full-lr2e5 --repo gohumanize/gohumanize-open-humanizer --no-private --replace
+    modal run train/push_to_hub.py::push --run-name open-humanizer-v1 --repo gohumanize/gohumanize-open-humanizer-qlora --card-name model-card-qlora.md
+    modal run train/push_to_hub.py::gguf --run-name open-humanizer-full-lr2e5 --repo gohumanize/gohumanize-open-humanizer
 """
 
 from __future__ import annotations
@@ -59,7 +60,8 @@ gguf_image = (
 
 
 @app.function(image=push_image, volumes={"/models": volume}, secrets=secrets, timeout=60 * 60)
-def push(run_name: str, repo: str, private: bool = True) -> str:
+def push(run_name: str, repo: str, private: bool = True, card_name: str = "model-card.md",
+         replace: bool = False) -> str:
     import os
 
     from huggingface_hub import HfApi
@@ -67,13 +69,17 @@ def push(run_name: str, repo: str, private: bool = True) -> str:
     api = HfApi(token=os.environ["HF_TOKEN"])
     api.create_repo(repo, repo_type="model", private=private, exist_ok=True)
     src = f"/models/{run_name}"
+    # replace=True swaps the weights of an existing repo in one commit: files from the
+    # previous model (other shard names, an old adapter) are removed together with the upload.
+    delete = ["*.safetensors", "*.safetensors.index.json", "lora/*"] if replace else None
     api.upload_folder(repo_id=repo, folder_path=f"{src}/merged-16bit", path_in_repo=".",
-                      commit_message="Upload merged 16-bit weights")
-    api.upload_folder(repo_id=repo, folder_path=f"{src}/lora", path_in_repo="lora",
-                      commit_message="Upload LoRA adapter")
+                      delete_patterns=delete, commit_message=f"Upload 16-bit weights ({run_name})")
+    if os.path.isdir(f"{src}/lora"):  # QLoRA runs also have the adapter on its own
+        api.upload_folder(repo_id=repo, folder_path=f"{src}/lora", path_in_repo="lora",
+                          commit_message="Upload LoRA adapter")
     api.upload_file(repo_id=repo, path_or_fileobj=f"{src}/train_summary.json",
                     path_in_repo="train_summary.json", commit_message="Add training summary")
-    card = Path("/docs/model-card.md")
+    card = Path("/docs") / card_name
     if card.exists():
         api.upload_file(repo_id=repo, path_or_fileobj=str(card), path_in_repo="README.md",
                         commit_message="Add model card")

@@ -11,7 +11,7 @@ tags:
 - style-transfer
 - qwen3
 - unsloth
-- lora
+- full-fine-tune
 datasets:
 - gohumanize/gohumanize-open-humanizer-dataset
 ---
@@ -19,8 +19,9 @@ datasets:
 # GoHumanize Open Humanizer
 
 A small open model that rewrites AI-styled English prose into more natural human
-writing. It is a QLoRA fine-tune of **Qwen3-4B** on 2,000 pairs of (AI-styled
-passage, human original) built from public-domain books (Project Gutenberg).
+writing. It is a **full fine-tune of Qwen3-4B** (all four billion weights
+updated) on 2,000 pairs of (AI-styled passage, human original) built from
+public-domain books (Project Gutenberg).
 
 The Open Humanizer is a public research and educational model created to
 demonstrate the general approach used to develop AI text humanization systems.
@@ -56,9 +57,14 @@ out = model.generate(ids, max_new_tokens=600, temperature=0.7, top_p=0.9, do_sam
 print(tok.decode(out[0][ids.shape[1]:], skip_special_tokens=True))
 ```
 
-Also available: a GGUF build in `gguf/` for Ollama / LM Studio / llama.cpp, an
-MCP server (`npx gohumanize-open-humanizer-mcp`), a Python client
-(`pip install gohumanize-open-humanizer`) and a browser demo at
+Run it locally without a GPU using the GGUF builds in `gguf/`:
+
+```bash
+ollama run hf.co/gohumanize/gohumanize-open-humanizer:Q4_K_M
+```
+
+Also available: an MCP server (`npx gohumanize-open-humanizer-mcp`), a Python
+client (`pip install gohumanize-open-humanizer`) and a browser demo at
 https://gohumanize.ai/open-model.
 
 ## Training
@@ -66,15 +72,20 @@ https://gohumanize.ai/open-model.
 | | |
 |---|---|
 | Base model | Qwen/Qwen3-4B (Apache-2.0) |
-| Method | QLoRA with Unsloth: 4-bit base, LoRA rank 16, alpha 32, all attention and MLP projections |
+| Method | Full fine-tune with Unsloth: every weight updated in bf16, 8-bit AdamW, gradient checkpointing |
 | Data | 2,000 train / 200 test pairs, see the dataset card |
 | Loss | on the assistant (human target) tokens only |
-| Epochs, LR, batch | 2 epochs (250 steps), 2e-4 cosine, effective batch 16, max 1,024 tokens |
-| Hardware | 1x NVIDIA A10G (24 GB) on Modal, 21.7 minutes |
-| Tracking | [Weights & Biases run](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg) |
-| Final losses | train 1.30, eval 1.39 (3.17 before training) |
+| Epochs, LR, batch | 2 epochs (250 steps), 2e-5 cosine, effective batch 16, max 1,024 tokens |
+| Hardware | 1x NVIDIA H100 (80 GB) on Modal, 7.2 minutes of training |
+| Tracking | [Weights & Biases run](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/khrhh8sl) |
+| Final losses | train 1.27, eval 1.38 (3.17 before training) |
 
-The LoRA adapter is in `lora/`; the main files are the merged 16-bit weights.
+We also trained the same model with QLoRA (a rank-16 adapter on a 4-bit base, on a
+24 GB GPU). The two score the same on every measure below; the full fine-tune
+reached the lowest held-out loss, so it is the published model. The QLoRA version,
+including its small adapter, is at
+[gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora).
+The write-up (section 5.4) compares them in detail.
 
 ## Evaluation
 
@@ -82,14 +93,14 @@ Base Qwen3-4B vs this model on the 200 held-out pairs, against the human origina
 
 | Measure (200 held-out pairs) | AI-styled input | Base Qwen3-4B | Open Humanizer | Human target |
 |---|---|---|---|---|
-| BERTScore F1 vs human (higher = closer meaning) | 0.914 | 0.900 | 0.921 |  |
-| ROUGE-L vs human (higher = closer wording) | 0.493 | 0.424 | 0.540 |  |
-| Names/capitalised tokens kept (recall) | 0.587 | 0.594 | 0.623 |  |
-| Length ratio vs human | 1.027 | 0.830 | 0.928 | 1.000 |
-| Contractions per 100 words | 0.279 | 0.772 | 0.044 | 0.118 |
-| Transition words per 100 words | 0.757 | 0.023 | 0.106 | 0.143 |
+| BERTScore F1 vs human (higher = closer meaning) | 0.914 | 0.900 | 0.920 |  |
+| ROUGE-L vs human (higher = closer wording) | 0.493 | 0.425 | 0.535 |  |
+| Names/capitalised tokens kept (recall) | 0.587 | 0.593 | 0.614 |  |
+| Length ratio vs human | 1.027 | 0.831 | 0.952 | 1.000 |
+| Contractions per 100 words | 0.279 | 0.761 | 0.016 | 0.118 |
+| Transition words per 100 words | 0.757 | 0.023 | 0.110 | 0.143 |
 | Stock LLM phrases per text | 0.19 | 0.01 | 0.00 | 0.00 |
-| Average sentence length (words) | 21.6 | 15.2 | 22.5 | 28.1 |
+| Average sentence length (words) | 21.6 | 15.1 | 22.6 | 28.1 |
 
 These measure how far the output moves from AI-styled prose towards the human
 target. They are not detector scores.
@@ -108,14 +119,15 @@ target. They are not detector scores.
 | Resource | Link |
 | --- | --- |
 | Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
-| Model weights, LoRA adapter, GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
+| Model weights and GGUF builds (full fine-tune) | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
+| QLoRA version and LoRA adapter | [gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora) |
 | Dataset, 2,200 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |
 | Write-up: every step, service and result | [docs/paper.md](https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md) |
 | Archived release, citable DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Python client and CLI | [pypi.org/project/gohumanize-open-humanizer](https://pypi.org/project/gohumanize-open-humanizer/) |
 | MCP server for AI assistants | [npm](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp) · [source](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) |
-| Training run, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg) |
+| Training run, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/khrhh8sl) |
 
 ## Licence and citation
 
