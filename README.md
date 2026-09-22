@@ -30,6 +30,7 @@ that explains every step and every service used.
 | MCP server | [npm: gohumanize-open-humanizer-mcp](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp), [source](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) |
 | Python client | [PyPI: gohumanize-open-humanizer](https://pypi.org/project/gohumanize-open-humanizer/), source in [`packages/python`](packages/python) |
 | Project page and demo | https://gohumanize.ai/open-model |
+| GoHumanize (the product this research comes from) | https://gohumanize.ai/ |
 
 Model weights, GGUF files and the dataset are published on Hugging Face under
 https://huggingface.co/gohumanize; the browser demo is on the project page.

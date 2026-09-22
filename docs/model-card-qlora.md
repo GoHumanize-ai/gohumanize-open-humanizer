@@ -68,3 +68,5 @@ Usage, system prompt and chat format are the same as for the
 Apache-2.0. Cite as:
 
 > GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.1.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
+
+GoHumanize, the product this research comes from: https://gohumanize.ai/
