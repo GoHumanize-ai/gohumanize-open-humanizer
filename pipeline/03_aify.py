@@ -177,8 +177,14 @@ def aify(row: dict, provider: str, style: str) -> dict | None:
                 return {
                     "id": row["id"], "input": out, "output": row["text"],
                     "generator": MODELS[provider], "style": style,
-                    "gutenberg_id": row["gutenberg_id"], "title": row["title"],
-                    "author": row["author"], "category": row["category"],
+                    # Provenance differs by source: books carry a Gutenberg id and an
+                    # author, US federal articles carry an agency and a URL.
+                    "source": row.get("source_kind", "gutenberg" if "gutenberg_id" in row else "us-federal"),
+                    "gutenberg_id": row.get("gutenberg_id", 0),
+                    "title": row.get("title") or row.get("url", ""),
+                    "author": row.get("author") or row.get("agency", ""),
+                    "category": row["category"],
+                    "url": row.get("url", ""),
                 }
             log.warning("rejected %s (%s/%s) attempt %d: %s", row["id"], provider, style, attempt + 1, why)
         except Exception as e:  # noqa: BLE001
