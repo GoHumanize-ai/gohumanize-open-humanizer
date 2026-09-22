@@ -136,8 +136,9 @@ The point of this project is that a developer can repeat every step and own the 
 Training needs more than the weights (the adapter, the optimizer state, and the intermediate values of each batch); our QLoRA run peaked at 8.6 GB on a 24 GB card (section 4.5). Three reasons made the smallest sensible size the right one:
 
 1. **The task does not need knowledge.** A humanizer does not have to know facts: everything it needs is in the input text. It needs fluent English and the ability to follow a style. Larger models mostly add knowledge and reasoning, which this task does not use, and section 5 shows that a 4B model learns the style shift well.
-2. **Anyone can repeat it.** A 4B model trains in about 22 minutes for about a dollar. A 32B model would take several hours on an 80 GB GPU and cost tens of dollars per attempt, and every failed attempt (section 4.4) would cost the same again.
-3. **Anyone can run it.** The 4-bit GGUF build is about 2.5 GB and runs in Ollama or LM Studio on an ordinary laptop, and the hosted demo needs only a mid-range GPU.
+2. **A small dataset moves a small model further.** The bigger the model, the more firmly its own writing habits are set by its original training, and the more training text it takes to shift them: the same 2,000 examples are spread over far more weights, so each one barely moves. With a dataset this size you see a clear change in the output of a 4B model, while a 32B model would come out sounding much as it started. Bigger models are the right choice when you also have a much bigger dataset.
+3. **Anyone can repeat it.** A 4B model trains in about 22 minutes for about a dollar. A 32B model would take several hours on an 80 GB GPU and cost tens of dollars per attempt, and every failed attempt (section 4.4) would cost the same again.
+4. **Anyone can run it.** The 4-bit GGUF build is about 2.5 GB and runs in Ollama or LM Studio on an ordinary laptop, and the hosted demo needs only a mid-range GPU.
 
 For a production system where quality matters more than cost, a larger base model would be worth testing. That is outside the purpose of this release.
 
@@ -294,10 +295,20 @@ next to it ([gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/
 with its 66 MB adapter, because it is the cheaper recipe to reproduce: the same quality
 on a 24 GB GPU for about a dollar, where the full fine-tune needs an 80 GB one.
 
+**Why a full fine-tune can go further.** A full fine-tune rewrites every weight in the
+model, so there is no limit on how far its writing can move away from the base model's
+habits. QLoRA changes a small adapter (here 33 million numbers, under 1% of the model)
+on top of a frozen, 4-bit copy, so the change it can make is smaller by construction,
+and the 4-bit base adds a little rounding noise. With a large dataset, or a target style
+far from anything the base model writes, that ceiling matters and the full fine-tune
+gives the stronger shift. At our scale it did not: 2,000 pairs are not enough signal to
+need more than a low-rank update, which is why the two came out level on every measure,
+with the full fine-tune ahead only on held-out loss.
+
 **Which one to use for your own project.** Start with QLoRA: it is cheaper, faster to
-iterate on, and here it gave the same result. A full fine-tune becomes worth its cost
-with much more data, or when the task needs the model to learn new knowledge rather
-than a new register. The run records are in `train/runs/`
+iterate on, and here it gave the same result. Move to a full fine-tune when you have
+much more data, when you want the style shifted further than an adapter can take it, or
+when the task needs the model to learn new knowledge rather than a new register. The run records are in `train/runs/`
 (`open-humanizer-full-lr1e5.json`, `open-humanizer-full-lr2e5.json`) and the
 evaluation in `eval/results/open-humanizer-full-lr2e5.json`.
 

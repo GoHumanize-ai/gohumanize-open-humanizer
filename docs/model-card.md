@@ -81,8 +81,11 @@ https://gohumanize.ai/open-model.
 | Final losses | train 1.27, eval 1.38 (3.17 before training) |
 
 We also trained the same model with QLoRA (a rank-16 adapter on a 4-bit base, on a
-24 GB GPU). The two score the same on every measure below; the full fine-tune
-reached the lowest held-out loss, so it is the published model. The QLoRA version,
+24 GB GPU). A full fine-tune rewrites every weight, so it can shift a model's writing
+further than an adapter of 33 million numbers on a frozen 4-bit base; with a dataset
+this small that ceiling never came into play, and the two score the same on every
+measure below. The full fine-tune reached the lowest held-out loss, so it is the
+published model. The QLoRA version,
 including its small adapter, is at
 [gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora).
 The write-up (section 5.4) compares them in detail.
