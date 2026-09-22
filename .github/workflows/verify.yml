@@ -23,7 +23,10 @@ jobs:
       - name: Install the Python client
         run: pip install ./packages/python
 
-      - name: Client and CLI against a stub endpoint
+      - name: Client tests against a stub endpoint
+        run: python3 packages/python/test_client.py
+
+      - name: The CLI works once installed
         run: |
           python3 - <<'PY'
           import json, os, subprocess, threading
@@ -32,8 +35,6 @@ jobs:
           class Handler(BaseHTTPRequestHandler):
               def do_POST(self):
                   body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-                  assert body["messages"][0]["role"] == "system", "system prompt missing"
-                  assert body["chat_template_kwargs"] == {"enable_thinking": False}
                   text = body["messages"][-1]["content"]
                   payload = json.dumps({"choices": [{"message": {"content": "rewritten: " + text}}]}).encode()
                   self.send_response(200)
@@ -47,19 +48,9 @@ jobs:
 
           server = HTTPServer(("127.0.0.1", 8123), Handler)
           threading.Thread(target=server.serve_forever, daemon=True).start()
-
-          from gohumanize_open_humanizer import Humanizer, __version__
-          h = Humanizer(base_url="http://127.0.0.1:8123/v1", api_key="test")
-          out = h.humanize("It is worth noting that the committee reached a consensus.")
-          assert out.startswith("rewritten:"), out
-          long_text = ("First paragraph, which is long enough to stand on its own.\n\n"
-                       "Second paragraph, also long enough to be sent separately.")
-          assert h.humanize_document(long_text).count("rewritten:") == 2
-          print("client OK, version", __version__)
-
           env = dict(os.environ, OPEN_HUMANIZER_API_KEY="test")
-          cli = subprocess.run(["open-humanizer", "hello there", "--url", "http://127.0.0.1:8123/v1"],
-                               capture_output=True, text=True, env=env)
+          cli = subprocess.run(["open-humanizer", "hello there", "--url", "http://127.0.0.1:8123/v1",
+                                "--samples", "1"], capture_output=True, text=True, env=env)
           assert cli.returncode == 0, cli.stderr
           assert "rewritten: hello there" in cli.stdout, cli.stdout
           print("CLI OK")

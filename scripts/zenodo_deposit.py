@@ -44,6 +44,7 @@ METADATA = {
             "write-up explaining every step and service used.</p>"
             "<p><b>Links</b></p><ul>"
             "<li>Project page and browser demo: https://gohumanize.ai/open-model</li>"
+            "<li>GoHumanize, the product this research comes from: https://gohumanize.ai/</li>"
             "<li>Model weights and GGUF builds (full fine-tune): https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
             "<li>QLoRA version and LoRA adapter: https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora</li>"
             "<li>Dataset (CC-BY 4.0): https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset</li>"
