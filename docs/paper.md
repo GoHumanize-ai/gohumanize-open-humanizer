@@ -4,7 +4,7 @@
 
 ## Abstract
 
-We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B with QLoRA in 22 minutes on a single rented GPU, for about one dollar, and trained a full fine-tune of all four billion weights for comparison, which gave no measurable gain. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
+We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B in two ways: with QLoRA, in 22 minutes on a single rented 24 GB GPU for about one dollar, and as a full fine-tune of all four billion weights on an 80 GB GPU. The two score the same. The full fine-tune, which reached the lowest held-out loss, is the published model; the QLoRA version is released alongside it as the cheaper recipe to reproduce. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
 
 ## 1. Purpose and scope
 
@@ -175,6 +175,8 @@ Each pair is rendered with the Qwen3 chat template: a fixed system prompt ("Rewr
 
 The evaluation loss fell from 3.17 (base model, measured on the same pairs before training) to 1.43 after the first 50 steps and 1.39 at the end; most of the learning happens early, which is common for style tasks with a strong base model. The training script is `train/modal_train.py`.
 
+This section describes the QLoRA run, which we built first and which is the cheaper recipe to follow. The model we publish is the full fine-tune of the same data, described and compared in section 5.4; the two score the same.
+
 ### 4.4 A note on getting the environment right
 
 The first attempt at training failed four times before a single step ran, every time on library plumbing rather than on the data or the model: a missing local package, a file read that only works on the developer's machine, and two variants of a version clash between TRL and Unsloth (the fix was simply to import Unsloth before TRL so that its patches apply). We mention this because it is the normal experience with fast-moving ML libraries, and it is why the script supports a 3-step smoke run: spend a minute of GPU time to validate the setup before spending an hour.
@@ -215,7 +217,7 @@ We also report the same statistics for the AI-styled input itself and for the hu
 
 ### 5.2 Results
 
-| Measure (200 held-out pairs) | AI-styled input | Base Qwen3-4B | Open Humanizer | Human target |
+| Measure (200 held-out pairs) | AI-styled input | Base Qwen3-4B | Open Humanizer (QLoRA) | Human target |
 |---|---|---|---|---|
 | BERTScore F1 vs human (higher = closer meaning) | 0.914 | 0.900 | 0.921 |  |
 | ROUGE-L vs human (higher = closer wording) | 0.493 | 0.424 | 0.540 |  |
@@ -284,17 +286,25 @@ usual outcome for style transfer with a small dataset: 2,000 pairs are not enoug
 signal to need more than a low-rank update, and the adapter captures what there is
 to learn.
 
-For this task QLoRA is the better choice. It matches the quality, trains on a 24 GB
-GPU for about a dollar where the full fine-tune needs an 80 GB one, and produces a
-small adapter as well as merged weights. A full fine-tune becomes worth trying with
-much more data, or when the task needs the model to learn new knowledge rather than
-a new register. The run records are in `train/runs/`
+**Which one we publish.** Both. The full fine-tune is the main published model
+([gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer)):
+it reached the lowest held-out loss, and updating every weight is the most direct form
+of fine-tuning, so it is the natural reference model. The QLoRA version is published
+next to it ([gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora)),
+with its 66 MB adapter, because it is the cheaper recipe to reproduce: the same quality
+on a 24 GB GPU for about a dollar, where the full fine-tune needs an 80 GB one.
+
+**Which one to use for your own project.** Start with QLoRA: it is cheaper, faster to
+iterate on, and here it gave the same result. A full fine-tune becomes worth its cost
+with much more data, or when the task needs the model to learn new knowledge rather
+than a new register. The run records are in `train/runs/`
 (`open-humanizer-full-lr1e5.json`, `open-humanizer-full-lr2e5.json`) and the
 evaluation in `eval/results/open-humanizer-full-lr2e5.json`.
 
 ## 6. Serving and integration
 
-- **Weights** are on Hugging Face: merged 16-bit safetensors, the LoRA adapter, and GGUF files (Q4_K_M and Q8_0) built with llama.cpp so the model runs locally in Ollama, LM Studio or llama.cpp.
+- **Weights** are on Hugging Face: the full fine-tune as 16-bit safetensors plus GGUF files (Q4_K_M and Q8_0) built with llama.cpp, so the model runs locally in Ollama, LM Studio or llama.cpp. The QLoRA version, with its adapter and its own GGUF files, is in a second repository.
+- **Endpoint model**: the hosted demo serves the full fine-tune.
 - **Endpoint**: `serve/modal_serve.py` runs vLLM on Modal behind an OpenAI-compatible API (`/v1/chat/completions`). The container scales to zero when idle, so the demo costs nothing while unused and roughly one A10G-hour per hour of use.
 - **MCP server** (`npx gohumanize-open-humanizer-mcp`) exposes a `humanize_text` tool to AI assistants. It calls the endpoint above by default, or any OpenAI-compatible server you point it at, including a local Ollama running the GGUF.
 - **Python client** (`pip install gohumanize-open-humanizer`) with an `open-humanizer` command, same options.
@@ -335,10 +345,11 @@ python pipeline/03_aify.py --human data/human_train.jsonl --out data/pairs_train
 python pipeline/03_aify.py --human data/human_test.jsonl  --out data/pairs_test.jsonl
 python pipeline/04_build_dataset.py --pairs-dir data --out-dir dataset
 modal run train/modal_train.py --max-steps 3 --run-name smoke                  # validate setup
-modal run train/modal_train.py --run-name open-humanizer-v1                    # ~25 min, ~$1
-modal run eval/modal_eval.py --run-name open-humanizer-v1
-modal run train/push_to_hub.py::push --run-name open-humanizer-v1 --repo <org>/<model>
-modal run train/push_to_hub.py::gguf --run-name open-humanizer-v1 --repo <org>/<model>
+modal run train/modal_train.py --run-name open-humanizer-v1                    # QLoRA, A10G, ~25 min, ~$1
+modal run train/modal_train.py --method full --learning-rate 2e-5 --run-name open-humanizer-full-lr2e5   # full, H100
+modal run eval/modal_eval.py --run-name open-humanizer-full-lr2e5
+modal run train/push_to_hub.py::push --run-name open-humanizer-full-lr2e5 --repo <org>/<model>
+modal run train/push_to_hub.py::gguf --run-name open-humanizer-full-lr2e5 --repo <org>/<model>
 modal deploy serve/modal_serve.py
 ```
 
@@ -349,14 +360,15 @@ Total cost of one full reproduction: under $5. Total time: about two hours inclu
 | Resource | Link |
 | --- | --- |
 | Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
-| Model weights, LoRA adapter, GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
+| Model weights and GGUF builds (full fine-tune) | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
+| QLoRA version and LoRA adapter | [gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora) |
 | Dataset, 2,200 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |
 | Write-up: every step, service and result | [docs/paper.md](https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md) |
 | Archived release, citable DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Python client and CLI | [pypi.org/project/gohumanize-open-humanizer](https://pypi.org/project/gohumanize-open-humanizer/) |
 | MCP server for AI assistants | [npm](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp) · [source](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) |
-| Training run, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg) |
+| Training runs, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer) (full fine-tune `khrhh8sl`, QLoRA `95wi8tdg`) |
 
 ## Citation
 
