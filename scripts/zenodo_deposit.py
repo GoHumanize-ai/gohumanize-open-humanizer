@@ -10,6 +10,7 @@ explicit step:
     python scripts/zenodo_deposit.py --refresh <id>      # replace files + metadata on a draft
     python scripts/zenodo_deposit.py --publish <id>      # mint the DOI
     python scripts/zenodo_deposit.py --update-metadata <id>   # fix metadata on a published record
+    python scripts/zenodo_deposit.py --new-version <id>  # draft a new version of a published record
 
 Token: ~/.zenodo_token or ZENODO_TOKEN.
 """
@@ -28,7 +29,7 @@ import requests
 
 API = "https://zenodo.org/api"
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "0.1.0"  # matches the PyPI and npm packages
+VERSION = "0.1.6"  # matches the PyPI and npm packages
 
 METADATA = {
     "metadata": {
@@ -51,7 +52,8 @@ METADATA = {
             "<li>Python client and CLI: https://pypi.org/project/gohumanize-open-humanizer/</li>"
             "<li>MCP server: https://www.npmjs.com/package/gohumanize-open-humanizer-mcp "
             "(source: https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp)</li>"
-            "<li>Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/95wi8tdg</li></ul>"
+            "<li>Training runs: https://wandb.ai/gohumanize/gohumanize-open-humanizer "
+            "(full fine-tune khrhh8sl, QLoRA 95wi8tdg)</li></ul>"
             "<p>The Open Humanizer is separate from the production models used by GoHumanize.ai and makes "
             "no claim about AI detectors.</p>"
         ),
@@ -156,6 +158,24 @@ def update_metadata(tok: str, dep_id: int) -> None:
     print("metadata updated:", r.json()["doi_url"])
 
 
+def new_version(tok: str, dep_id: int) -> None:
+    """Start a new version of a PUBLISHED record: a draft with this repository's current
+    files and metadata, and its own DOI. Left unpublished; run --publish when happy."""
+    h = {"Authorization": f"Bearer {tok}"}
+    r = requests.post(f"{API}/deposit/depositions/{dep_id}/actions/newversion", headers=h, timeout=60)
+    r.raise_for_status()
+    draft_url = r.json()["links"]["latest_draft"]
+    dep = requests.get(draft_url, headers=h, timeout=60).json()
+    # The draft starts as a copy of the previous version's files; replace them all.
+    for f in dep.get("files", []):
+        requests.delete(f"{API}/deposit/depositions/{dep['id']}/files/{f['id']}", headers=h, timeout=60)
+        print("removed", f["filename"])
+    dep = requests.get(draft_url, headers=h, timeout=60).json()
+    upload_all(tok, dep)
+    set_metadata(tok, dep)
+    print("new draft:", dep["links"]["html"], "-> publish with --publish", dep["id"])
+
+
 def publish(tok: str, dep_id: int) -> None:
     h = {"Authorization": f"Bearer {tok}"}
     r = requests.post(f"{API}/deposit/depositions/{dep_id}/actions/publish", headers=h, timeout=60)
@@ -170,6 +190,7 @@ if __name__ == "__main__":
     g.add_argument("--refresh", type=int, metavar="DEPOSITION_ID")
     g.add_argument("--publish", type=int, metavar="DEPOSITION_ID")
     g.add_argument("--update-metadata", type=int, metavar="DEPOSITION_ID")
+    g.add_argument("--new-version", type=int, metavar="PUBLISHED_DEPOSITION_ID")
     a = ap.parse_args()
     t = token()
     if a.create:
@@ -178,5 +199,7 @@ if __name__ == "__main__":
         refresh(t, a.refresh)
     elif a.update_metadata:
         update_metadata(t, a.update_metadata)
+    elif a.new_version:
+        new_version(t, a.new_version)
     else:
         publish(t, a.publish)
