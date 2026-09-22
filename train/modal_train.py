@@ -23,6 +23,7 @@ Run from the repo root:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import modal
@@ -40,13 +41,16 @@ SYSTEM_PROMPT = (
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# The published dataset by default. Point DATASET_DIR at a candidate build to train on it
+# without touching the released files.
+DATASET_DIR = REPO_ROOT / os.environ.get("DATASET_DIR", "dataset")
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
     # Unsloth pins the transformers/TRL/PEFT versions it is tested with, so we let it
     # resolve them. The exact versions used are recorded in train_summary.json.
     .pip_install("unsloth", "wandb", "huggingface_hub")
-    .add_local_dir(REPO_ROOT / "dataset", remote_path=REMOTE_DATA)
+    .add_local_dir(DATASET_DIR, remote_path=REMOTE_DATA)
 )
 
 app = modal.App(APP_NAME)
