@@ -1,7 +1,7 @@
 # Adding modern human prose did not stop the model copying modern input
 
-Status: negative result. Kept because it rules out the obvious explanation and points at the
-real one.
+Status: resolved. The first attempt failed and the reasons are kept below, because each wrong
+turn ruled something out. The fix is in the final section.
 
 ## The problem
 
@@ -83,3 +83,50 @@ teach a real transformation.
 Until then, the demo and both clients generate several rewrites and return the one that moved
 furthest from the input, which takes the user-visible copy rate to near zero. That is a
 mitigation, not a fix: the underlying per-sample rate is unchanged.
+
+## Update: what actually fixed it
+
+Two further findings, each measured before acting on it.
+
+**The source was never the problem.** Voice of America, plain journalistic prose and nothing like a
+press release, measured the same 0.68 input-to-target overlap as agency text. So the register of the
+human side does not matter here.
+
+**The AI-fication instruction was.** It asked for every fact kept, the order kept and the length within
+20 percent. On a modern factual passage that leaves almost nothing to change, so the machine version came
+back nearly identical to the original. A hard register that keeps every fact, name, number and quotation
+but forbids keeping the sentence structure took the mean overlap on the same federal passages from 0.63
+to 0.49, below the books' 0.54 (`03_aify.py --register hard`).
+
+**Then a data review found the model inventing things.** Anything the human target carries and the
+machine input lacks becomes something the model learns to add. 190 Federal Reserve targets had footnote
+numbers glued to sentence ends and 39 had press-release datelines; the retrained model began inventing
+both. The build now strips them, drops media notices, and refuses to write a dataset where a target still
+carries one; CI checks the released dataset the same way. The review also found 70 of 96 modern test
+articles had sibling passages in training, so test articles are now held out whole.
+
+## Final result
+
+Article-held-out test set (100 modern passages from 59 articles never seen in training, 200 literary),
+three samples per passage, two training seeds:
+
+| | published | clean, seed 13 | clean, seed 29 |
+| --- | --- | --- | --- |
+| modern near-copies | 37.7% | 17.0% | 16.3% |
+| literary near-copies | 16.7% | 13.3% | 14.5% |
+| invented datelines (of 900) | 0 | 0 | 0 |
+| invented footnote numbers (of 900) | 0 | 0 | 0 |
+| invented links (of 900) | 0 | 0 | 1 |
+| real rewrites that drop a number | 31.9% | 28.5% | 28.5% |
+
+The last row counts only outputs that actually rewrite the passage. Counting copies too makes the published
+model look better at keeping numbers (17.1% against 23.0%), but only because a copy keeps every number
+trivially and the published model copies twice as often.
+
+Loss told us nothing throughout: runs with the same loss differed by twelve points in copy rate.
+
+## Known limitation, all versions
+
+About three in ten real rewrites of number-heavy text drop at least one number, for the published model
+and the retrain alike. Some of that is rewording ("20 percent" to "a fifth"), some is loss. The best-of-N
+selector in the clients could prefer candidates that keep every number of the input; not done yet.
