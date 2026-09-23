@@ -21,8 +21,8 @@ datasets:
 A small open model that rewrites AI-styled English prose into more natural human
 writing. It is a **full fine-tune of Qwen3-4B** (all four billion weights updated)
 on 2,957 pairs of (AI-styled passage, human original). The human side is
-public domain: 2,000 passages from books on Project Gutenberg and, since version 2,
-957 passages of modern prose from US federal agencies.
+public domain: 2,000 passages from books on Project Gutenberg and 957 passages of
+modern prose from US federal agencies.
 
 The Open Humanizer is a public research and educational model created to
 demonstrate the general approach used to develop AI text humanization systems.
@@ -36,28 +36,21 @@ and **it makes no claim about AI detectors**.
 Everything about the project (dataset, code, evaluation, write-up):
 https://gohumanize.ai/open-model
 
-## What changed in version 2
+## How often it rewrites
 
-Version 1 often returned modern text almost unchanged: on AI-styled versions of
-modern articles it gave back a near-copy (more than 90% of the input's words kept)
-38% of the time. The cause was in how the training pairs were made. Rewriting a
-modern factual passage "in AI style" while keeping every fact and the length left
-so little to change that the pairs taught the model to leave modern text alone.
-Version 2 generates that side with a stricter instruction that keeps the facts but
-forbids keeping the sentence structure, adds modern public-domain prose, and
-removes press-release datelines and footnote numbers from the targets so the model
-does not learn to invent them. The write-up (section 6) tells the whole story.
+A humanizer can fail by handing its input back almost unchanged. On 300 held-out
+passages, three tries each at temperature 0.9:
 
-Near-copy rate on 300 held-out passages, three tries each at temperature 0.9:
+| | |
+|---|---|
+| Modern passages returned nearly unchanged (more than 90% of the words kept), from 59 articles never seen in training | 17.0% |
+| Book passages returned nearly unchanged | 13.3% |
+| Modern rewrites that lose a number | 28.5% |
+| Invented datelines, footnote numbers or links, of 900 outputs | 0 |
 
-| | Version 1 | **Version 2** |
-|---|---|---|
-| Modern passages (from 59 articles never seen in training) | 37.7% | **17.0%** |
-| Book passages | 16.7% | **13.3%** |
-| Modern rewrites that lose a number | 31.9% | **28.5%** |
-| Invented datelines, footnote numbers or links, of 900 outputs | 0 | **0** |
-
-Version 1 remains in this repository's history.
+The training pairs were built so the model learns to restructure sentences, not just swap
+words, and press-release datelines and footnote numbers were removed from the targets so
+the model does not learn to invent them. The write-up explains how.
 
 ## Use
 
@@ -101,39 +94,32 @@ https://gohumanize.ai/open-model.
 |---|---|
 | Base model | Qwen/Qwen3-4B (Apache-2.0) |
 | Method | Full fine-tune with Unsloth: every weight updated in bf16, 8-bit AdamW, gradient checkpointing |
-| Data | 2,957 train / 300 test pairs (dataset version 2), see the dataset card |
+| Data | 2,957 train / 300 test pairs, see the dataset card |
 | Loss | on the assistant (human target) tokens only |
 | Epochs, LR, batch | 2 epochs, 2e-5 cosine, effective batch 16, max 1,024 tokens, seed 13 |
 | Hardware | 1x NVIDIA H100 (80 GB) on Modal, 11 minutes of training |
 | Tracking | [Weights & Biases run](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/na5tpdrj) |
-| Final losses | train 1.02, eval 1.19 (not comparable with version 1: the test set changed) |
-
-The version 1 QLoRA build (a rank-16 adapter on a 4-bit base, trained on a 24 GB GPU
-for about a dollar), including its small adapter, is at
-[gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora).
-The write-up compares QLoRA and full fine-tuning in detail (sections 5.4 and 6.9).
+| Final losses | train 1.02, eval 1.19 |
 
 ## Evaluation
 
-Base Qwen3-4B, version 1 and version 2 on the 300 held-out passages (100 modern, 200
-from books), against the human original. The base model scored the same in both
-evaluation runs (BERTScore 0.9033 and 0.9034), so the columns are comparable.
+The untouched base model and the Open Humanizer on the 300 held-out passages (100
+modern, 200 from books), against the human original.
 
-| Measure (300 held-out pairs) | AI-styled input | Base Qwen3-4B | Version 1 | **Version 2** | Human target |
-|---|---|---|---|---|---|
-| BERTScore F1 vs human (higher = closer meaning) | 0.918 | 0.903 | 0.927 | **0.929** | |
-| ROUGE-L vs human (higher = closer wording) | 0.522 | 0.434 | 0.569 | **0.580** | |
-| Names/capitalised tokens kept (recall) | 0.601 | 0.610 | 0.640 | **0.652** | |
-| Length ratio vs human | 1.16 | 0.85 | 0.98 | **0.95** | 1.00 |
-| Contractions per 100 words | 0.33 | 0.69 | 0.07 | **0.08** | 0.16 |
-| Transition words per 100 words | 1.13 | 0.02 | 0.11 | **0.11** | 0.15 |
-| Stock LLM phrases per text | 0.70 | 0.01 | 0.03 | **0.03** | 0.02 |
-| Average sentence length (words) | 23.2 | 15.2 | 22.2 | **21.5** | 25.8 |
+| Measure (300 held-out pairs) | AI-styled input | Base Qwen3-4B | **Open Humanizer** | Human target |
+|---|---|---|---|---|
+| BERTScore F1 vs human (higher = closer meaning) | 0.918 | 0.903 | **0.929** | |
+| ROUGE-L vs human (higher = closer wording) | 0.522 | 0.434 | **0.580** | |
+| Names/capitalised tokens kept (recall) | 0.601 | 0.610 | **0.652** | |
+| Length ratio vs human | 1.16 | 0.85 | **0.95** | 1.00 |
+| Contractions per 100 words | 0.33 | 0.69 | **0.08** | 0.16 |
+| Transition words per 100 words | 1.13 | 0.02 | **0.11** | 0.15 |
+| Stock LLM phrases per text | 0.70 | 0.01 | **0.03** | 0.02 |
+| Average sentence length (words) | 23.2 | 15.2 | **21.5** | 25.8 |
 
-Version 2 keeps meaning, wording and names better than version 1 and is about level
-on style; the large difference between them is the copy rate above, which these
-measures cannot see: an output identical to the AI-styled input scores well on
-meaning and wording without having rewritten anything.
+These measures cannot see whether the model rewrote at all: an output identical to the
+AI-styled input scores well on meaning and wording. That is why the rewrite rate above
+is measured separately.
 
 These measure how far the output moves from AI-styled prose towards the human
 target. They are not detector scores.
@@ -156,8 +142,7 @@ target. They are not detector scores.
 | --- | --- |
 | Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | GoHumanize (the product this research comes from) | [gohumanize.ai](https://gohumanize.ai/) |
-| Model weights and GGUF builds (version 2 full fine-tune) | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
-| Version 1 QLoRA and LoRA adapter | [gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora) |
+| Model weights and GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Dataset, 3,257 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |
 | Write-up: every step, service and result | [docs/paper.md](https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md) |
