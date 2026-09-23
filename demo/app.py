@@ -60,7 +60,7 @@ with gr.Blocks(title="GoHumanize Open Humanizer") as demo:
     gr.Markdown(
         "# GoHumanize Open Humanizer\n"
         "An open, educational Qwen3-4B fine-tune that rewrites AI-styled English text into more "
-        "natural prose. Trained on 2,000 pairs built from public-domain books. "
+        "natural prose. Trained on 2,957 pairs built from public-domain books and modern US government writing. "
         "It is separate from the production models of GoHumanize.ai and makes no claim about AI detectors. "
         "[Model, dataset, code and write-up](https://gohumanize.ai/open-model)\n\n"
         "The endpoint scales to zero when idle, so the first request after a pause can take up to two minutes."
