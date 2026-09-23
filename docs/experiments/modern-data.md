@@ -130,3 +130,21 @@ Loss told us nothing throughout: runs with the same loss differed by twelve poin
 About three in ten real rewrites of number-heavy text drop at least one number, for the published model
 and the retrain alike. Some of that is rewording ("20 percent" to "a fifth"), some is loss. The best-of-N
 selector in the clients could prefer candidates that keep every number of the input; not done yet.
+
+## QLoRA on the same data
+
+The version 1 QLoRA recipe (rank 16, 4-bit base, lr 2e-4, 2 epochs) trained on dataset version 2 at the same
+two seeds, scored on the same test in the same way:
+
+| | QLoRA seed 13 | QLoRA seed 29 | full seed 13 (published) | full seed 29 |
+| --- | --- | --- | --- | --- |
+| modern near-copies | 7.0% | 5.7% | 17.0% | 16.3% |
+| literary near-copies | 12.5% | 12.2% | 13.3% | 14.5% |
+| real rewrites that drop a number | 26.8% | 26.2% | 28.5% | 28.5% |
+| inventions (of 900) | 1 | 1 | 0 | 1 |
+| held-out loss | 1.195 | 1.195 | 1.188 | |
+
+QLoRA copies well under half as often at both seeds. Version 1 showed the same gap (QLoRA 20%, full 38%),
+which the standard evaluation could not see. The one QLoRA invention is the same Federal Reserve passage at both
+seeds (a footnote-style "12" glued to a sentence end). Full results: `eval/results/copy-rate/v1-v2-qlora-full.json`.
+The full fine-tune stays the published model for version 2; the paper, section 6.9, records the comparison.

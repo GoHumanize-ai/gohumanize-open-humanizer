@@ -4,7 +4,7 @@
 
 ## Abstract
 
-We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B in two ways: with QLoRA, in 22 minutes on a single rented 24 GB GPU for about one dollar, and as a full fine-tune of all four billion weights on an 80 GB GPU. The two score the same. The full fine-tune, which reached the lowest held-out loss, is the published model; the QLoRA version is released alongside it as the cheaper recipe to reproduce. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. Version 2 (section 6) adds 957 pairs of modern prose from US federal agencies, which is also public domain, after we found that version 1 often returned modern text almost unchanged; the fix turned out to be in how the AI-styled side is generated, not in where the human side comes from, and it cut that rate from 38% to 17%. The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
+We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B in two ways: with QLoRA, in 22 minutes on a single rented 24 GB GPU for about one dollar, and as a full fine-tune of all four billion weights on an 80 GB GPU. The two score the same. The full fine-tune, which reached the lowest held-out loss, is the published model; the QLoRA version is released alongside it as the cheaper recipe to reproduce. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. Version 2 (section 6) adds 957 pairs of modern prose from US federal agencies, which is also public domain, after we found that version 1 often returned modern text almost unchanged; the fix turned out to be in how the AI-styled side is generated, not in where the human side comes from, and it cut that rate from 38% to 17%. A QLoRA build trained on the same data copies less still, about 6%, which corrects our earlier finding that the two methods are level (section 6.9). The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
 
 ## 1. Purpose and scope
 
@@ -418,7 +418,21 @@ Version 2 keeps meaning, wording and names better, and the two are about level o
 
 ### 6.9 QLoRA and full fine-tuning, revisited
 
-<!-- PENDING:QLORA -->
+Section 5.4 found QLoRA and the full fine-tune level on version 1. The standard measures could not see copying, so we trained QLoRA again on the version 2 data, with the version 1 QLoRA recipe unchanged (rank-16 adapter on a 4-bit base, learning rate 2e-4, 2 epochs, one A10G, 44 minutes), at the same two seeds, and ran it through the same copy test as section 6.8:
+
+| | v2 QLoRA, seed 13 | v2 QLoRA, seed 29 | v2 full fine-tune (published) | v2 full, seed 29 |
+|---|---|---|---|---|
+| Modern passages returned as a near-copy | **7.0%** | **5.7%** | 17.0% | 16.3% |
+| Book passages returned as a near-copy | **12.5%** | **12.2%** | 13.3% | 14.5% |
+| Modern rewrites that lose a number | **26.8%** | **26.2%** | 28.5% | 28.5% |
+| Invented datelines, footnote numbers or links, of 900 outputs | 1 | 1 | **0** | 1 |
+| Held-out loss | 1.195 | 1.195 | **1.188** | |
+
+On the problem version 2 set out to fix, the QLoRA build is clearly better: it returns a modern passage nearly unchanged about 6% of the time against about 17%, at both seeds, and it keeps numbers slightly better. Its one invention is the same passage at both seeds, a footnote-style "12" glued to the end of a Federal Reserve sentence. It writes slightly shorter modern rewrites (68% of the input's length against 74%) without losing more numbers. The held-out loss again points the wrong way: the full fine-tune has the lower loss and copies more.
+
+The same gap was already there in version 1 (QLoRA 20%, full fine-tune 38%), where section 5.4 missed it because it measured only meaning, wording and style. So the verdict of section 5.4 needs a correction: the two are level on those measures, but the full fine-tune is more inclined to hand its input back. We have not tested why. One reading is that the full fine-tune, free to move every weight towards the exact human wording, learns the targets more closely, and that includes the pairs whose target is close to their input.
+
+**Which one we publish.** The version 2 full fine-tune was chosen as the published model before this comparison was run, and it remains the published model: it fixes most of the copying (38% to 17%) and does not invent datelines or footnote numbers. The QLoRA build is the stronger model on this measure, and a later release may switch to it. It can be reproduced with the last command of section 10; its record is `train/runs/open-humanizer-qlora-v5-s13.json` and its W&B runs are `a31xq89m` (seed 13) and `opfu2cwb` (seed 29). For your own project the advice of section 5.4 stands, now with more reason: start with QLoRA, and measure the behaviour you care about before paying for a full fine-tune.
 
 ## 7. Serving and integration
 
@@ -484,6 +498,8 @@ python pipeline/03_aify.py --human data/human_modern_train.jsonl --out data/pair
 python pipeline/03_aify.py --human data/human_modern_test.jsonl  --out data/pairs_modernh_test.jsonl  --register hard
 python pipeline/04_build_dataset.py --pairs-dir data --prefixes pairs,pairs_modernh --holdout-by url --out-dir dataset
 modal run --detach train/modal_train.py --method full --learning-rate 2e-5 --seed 13 --run-name open-humanizer-full-v5-s13
+modal run --detach eval/modal_copy_rate.py --runs open-humanizer-full-v5-s13          # near-copies, lost numbers, inventions
+modal run --detach train/modal_train.py --seed 13 --run-name open-humanizer-qlora-v5-s13   # the QLoRA build of section 6.9
 ```
 
 The agency sites change daily, so a re-run collects different articles; the released dataset is the fixed record of the one we used. `--detach` keeps a long training run alive if your terminal loses its connection.

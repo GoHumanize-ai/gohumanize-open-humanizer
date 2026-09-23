@@ -1,0 +1,91 @@
+{
+  "samples_per_passage": 3,
+  "temperature": 0.9,
+  "test_set": "dataset/test.jsonl (version 2, 300 rows)",
+  "models": {
+    "open-humanizer-v1": {
+      "modern": {
+        "outputs": 300,
+        "near_copy_pct": 20.0,
+        "rewrites_losing_a_number_pct": 34.5,
+        "invented": 0
+      },
+      "literary": {
+        "outputs": 600,
+        "near_copy_pct": 11.3,
+        "rewrites_losing_a_number_pct": 28.6,
+        "invented": 0
+      }
+    },
+    "open-humanizer-full-lr2e5": {
+      "modern": {
+        "outputs": 300,
+        "near_copy_pct": 37.7,
+        "rewrites_losing_a_number_pct": 31.9,
+        "invented": 0
+      },
+      "literary": {
+        "outputs": 600,
+        "near_copy_pct": 16.7,
+        "rewrites_losing_a_number_pct": 23.1,
+        "invented": 0
+      }
+    },
+    "open-humanizer-full-v5-s13": {
+      "modern": {
+        "outputs": 300,
+        "near_copy_pct": 17.0,
+        "rewrites_losing_a_number_pct": 28.5,
+        "invented": 0
+      },
+      "literary": {
+        "outputs": 600,
+        "near_copy_pct": 13.3,
+        "rewrites_losing_a_number_pct": 33.3,
+        "invented": 0
+      }
+    },
+    "open-humanizer-full-v5-s29": {
+      "modern": {
+        "outputs": 300,
+        "near_copy_pct": 16.3,
+        "rewrites_losing_a_number_pct": 28.5,
+        "invented": 1
+      },
+      "literary": {
+        "outputs": 600,
+        "near_copy_pct": 14.5,
+        "rewrites_losing_a_number_pct": 35.7,
+        "invented": 0
+      }
+    },
+    "open-humanizer-qlora-v5-s13": {
+      "modern": {
+        "outputs": 300,
+        "near_copy_pct": 7.0,
+        "rewrites_losing_a_number_pct": 26.8,
+        "invented": 1
+      },
+      "literary": {
+        "outputs": 600,
+        "near_copy_pct": 12.5,
+        "rewrites_losing_a_number_pct": 26.7,
+        "invented": 0
+      }
+    },
+    "open-humanizer-qlora-v5-s29": {
+      "modern": {
+        "outputs": 300,
+        "near_copy_pct": 5.7,
+        "rewrites_losing_a_number_pct": 26.2,
+        "invented": 1
+      },
+      "literary": {
+        "outputs": 600,
+        "near_copy_pct": 12.2,
+        "rewrites_losing_a_number_pct": 20.0,
+        "invented": 0
+      }
+    }
+  }
+}
