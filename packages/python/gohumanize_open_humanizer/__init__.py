@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
@@ -25,7 +26,7 @@ from importlib.metadata import PackageNotFoundError, version as _pkg_version
 try:  # the single source of truth is pyproject.toml
     __version__ = _pkg_version("gohumanize-open-humanizer")
 except PackageNotFoundError:  # running from a source checkout
-    __version__ = "0.1.10"
+    __version__ = "0.1.11"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
@@ -94,17 +95,34 @@ def _unwrap_quotes(source: str, rewrite: str) -> str:
     return rewrite
 
 
+# About a quarter of rewrites of number-heavy text drop a figure. A rewrite that keeps
+# every number of the source is preferred, but only among real rewrites: a near-copy
+# keeps every number without trying.
+_NUMBER = re.compile(r"\d[\d,.]*")
+
+
+def _numbers(text: str) -> set[str]:
+    return {n.rstrip(".,").replace(",", "") for n in _NUMBER.findall(text)} - {""}
+
+
+def _prefer(pool: list[str], keep) -> list[str]:
+    """The candidates that pass `keep`, or all of them if none does."""
+    return [c for c in pool if keep(c)] or pool
+
+
 def _pick_most_rewritten(source: str, candidates: list[str]) -> str:
-    """The candidate that changed the most, among those of a sensible length that do not
-    add quotation marks."""
+    """The candidate that changed the most, among those of a sensible length, preferring
+    in turn: no added quotation marks, a real rewrite, every number of the source kept."""
     candidates = [_unwrap_quotes(source, c) for c in candidates if c]
     if len(candidates) < 2:
         return candidates[0] if candidates else ""
     source_words = len(source.split()) or 1
-    pool = [c for c in candidates
-            if MIN_LENGTH_RATIO <= len(c.split()) / source_words <= MAX_LENGTH_RATIO] or candidates
-    no_new_quotes = [c for c in pool if _count_quotes(c) <= _count_quotes(source)]
-    return min(no_new_quotes or pool, key=lambda c: _word_overlap(source, c))
+    source_numbers = _numbers(source)
+    pool = _prefer(candidates, lambda c: MIN_LENGTH_RATIO <= len(c.split()) / source_words <= MAX_LENGTH_RATIO)
+    pool = _prefer(pool, lambda c: _count_quotes(c) <= _count_quotes(source))
+    pool = _prefer(pool, lambda c: _word_overlap(source, c) <= NEAR_COPY)
+    pool = _prefer(pool, lambda c: source_numbers <= _numbers(c))
+    return min(pool, key=lambda c: _word_overlap(source, c))
 
 
 class Humanizer:
