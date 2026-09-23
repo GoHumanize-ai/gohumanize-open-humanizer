@@ -44,30 +44,27 @@ METADATA = {
             "Project Gutenberg and US federal agencies, AI-fication of inputs with three generators, "
             "training, evaluation, serving), the dataset of 2,957 training and 300 test pairs (CC-BY 4.0), "
             "the evaluation results and the paper-style write-up explaining every step and service used.</p>"
-            "<p><b>Version 0.2.0.</b> Version 1 often returned modern text nearly unchanged. The cause was in "
-            "how the AI-styled side of the training pairs was generated; version 2 fixes it and adds modern "
-            "public-domain prose, which takes the near-copy rate on unseen modern articles from 38% to 17% "
-            "(write-up, section 6).</p>"
+            "<p>The published model is a full fine-tune of all four billion weights. On held-out modern "
+            "articles never seen in training it returns a passage nearly unchanged 17% of the time, and it "
+            "does not invent datelines, footnote numbers or links (write-up, section 6).</p>"
             "<p><b>Links</b></p><ul>"
             "<li>Project page and browser demo: https://gohumanize.ai/open-model</li>"
             "<li>GoHumanize, the product this research comes from: https://gohumanize.ai/</li>"
-            "<li>Model weights and GGUF builds (version 2 full fine-tune): https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
-            "<li>Version 1 QLoRA and LoRA adapter: https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora</li>"
+            "<li>Model weights and GGUF builds: https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
             "<li>Dataset (CC-BY 4.0): https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset</li>"
             "<li>Code, pipeline and write-up: https://github.com/GoHumanize-ai/gohumanize-open-humanizer</li>"
             "<li>Paper: https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md</li>"
             "<li>Python client and CLI: https://pypi.org/project/gohumanize-open-humanizer/</li>"
             "<li>MCP server: https://www.npmjs.com/package/gohumanize-open-humanizer-mcp "
             "(source: https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp)</li>"
-            "<li>Training runs: https://wandb.ai/gohumanize/gohumanize-open-humanizer "
-            "(version 2 na5tpdrj; version 1 full fine-tune khrhh8sl, QLoRA 95wi8tdg)</li></ul>"
+            "<li>Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/na5tpdrj</li></ul>"
             "<p>The Open Humanizer is separate from the production models used by GoHumanize.ai and makes "
             "no claim about AI detectors.</p>"
         ),
         "creators": [{"name": "GoHumanize team", "affiliation": "GoHumanize"}],
         "version": VERSION,
         "license": "apache-2.0",
-        "keywords": ["humanizer", "text rewriting", "style transfer", "Qwen3", "LoRA", "public domain",
+        "keywords": ["humanizer", "text rewriting", "style transfer", "Qwen3", "fine-tuning", "public domain",
                      "Project Gutenberg", "US government", "dataset", "open model"],
         "related_identifiers": [
             {"identifier": "https://github.com/GoHumanize-ai/gohumanize-open-humanizer", "relation": "isSupplementTo", "scheme": "url"},
