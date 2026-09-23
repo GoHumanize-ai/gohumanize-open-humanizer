@@ -24,7 +24,7 @@ from pathlib import Path
 import modal
 
 VOLUME_NAME = "gohumanize-open-humanizer-models"
-RUN_NAME = "open-humanizer-full-lr2e5"  # the published model (full fine-tune)
+RUN_NAME = "open-humanizer-full-v5-s13"  # the published model (version 2 full fine-tune)
 MODEL_DIR = f"/models/{RUN_NAME}/merged-16bit"
 SERVED_NAME = "gohumanize-open-humanizer"
 REPO_ROOT = Path(__file__).resolve().parent.parent

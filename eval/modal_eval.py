@@ -21,6 +21,7 @@ Outputs eval/results/<run-name>.json and eval/results/<run-name>-samples.jsonl l
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -31,6 +32,8 @@ VOLUME_NAME = "gohumanize-open-humanizer-models"
 REMOTE_DATA = "/data"
 REMOTE_MODELS = "/models"
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# The published dataset by default; point DATASET_DIR at a candidate build to score on it.
+DATASET_DIR = REPO_ROOT / os.environ.get("DATASET_DIR", "dataset")
 
 SYSTEM_PROMPT = (
     "Rewrite the following text so that it reads as if a person wrote it: varied sentence "
@@ -41,7 +44,7 @@ SYSTEM_PROMPT = (
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install("vllm", "bert-score", "rouge-score", "huggingface_hub")
-    .add_local_dir(REPO_ROOT / "dataset", remote_path=REMOTE_DATA)
+    .add_local_dir(DATASET_DIR, remote_path=REMOTE_DATA)
 )
 app = modal.App("gohumanize-open-humanizer-eval")
 volume = modal.Volume.from_name(VOLUME_NAME)

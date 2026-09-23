@@ -9,9 +9,10 @@
 
 An open, educational text-humanization model: a **full fine-tune of Qwen3-4B**
 (Apache-2.0) that rewrites AI-styled English prose into more natural human writing,
-trained on 2,000 pairs built from 47 public-domain books (Project Gutenberg). A QLoRA
-version, trained in 22 minutes on one rented GPU for about a dollar, scores the same
-and is published alongside it.
+trained on 2,957 pairs whose human side is public domain: passages from 47 books on
+Project Gutenberg and, since version 2, modern prose from US federal agencies. The
+version 1 QLoRA build, trained in 22 minutes on one rented GPU for about a dollar, is
+published alongside it.
 
 This repository is the complete, reproducible pipeline: sourcing and cleaning the
 text, creating the AI-styled inputs, training, evaluation, serving, and the write-up
@@ -20,10 +21,10 @@ that explains every step and every service used.
 | Resource | Where |
 | --- | --- |
 | Write-up (paper) | [`docs/paper.md`](docs/paper.md) |
-| Model weights and GGUF (full fine-tune) | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
-| QLoRA version and LoRA adapter | [huggingface.co/gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora) |
+| Model weights and GGUF (version 2 full fine-tune) | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
+| Version 1 QLoRA and LoRA adapter | [huggingface.co/gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora) |
 | Model card | [`docs/model-card.md`](docs/model-card.md) |
-| Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), card and files in [`dataset/`](dataset/) (2,000 train / 200 test, CC-BY 4.0) |
+| Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), card and files in [`dataset/`](dataset/) (2,957 train / 300 test, CC-BY 4.0) |
 | Archived release, DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Evaluation results | [`eval/results/`](eval/results/) |
 | Training runs | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer) |
@@ -41,23 +42,35 @@ built so that developers and researchers can learn from and build on the work.
 
 ## Results in one table
 
-Base Qwen3-4B vs the fine-tuned model on 200 held-out pairs, measured against the
-human original (details and examples in the paper):
+How often each model hands back modern or literary text nearly unchanged (more than
+90% of the input's words kept), on 300 held-out passages, three tries each. The modern
+passages come from 59 articles never seen in training. Version 2 fixes the problem
+people saw in the demo; the write-up (section 6) explains the cause and the fix.
 
-| Measure | AI-styled input | Base Qwen3-4B | Open Humanizer (full) | QLoRA version | Human |
+| | Version 1 QLoRA | Version 1 full | **Version 2 full** |
+|---|---|---|---|
+| Modern passages returned nearly unchanged | 20.0% | 37.7% | **17.0%** |
+| Book passages returned nearly unchanged | 11.3% | 16.7% | **13.3%** |
+| Modern rewrites that lose a number | 34.5% | 31.9% | **28.5%** |
+| Invented datelines, footnote numbers or links (of 900) | 0 | 0 | **0** |
+
+And against the human original, the same 300 passages (the base model scored the same
+in both evaluation runs, so the columns are comparable):
+
+| Measure | AI-styled input | Base Qwen3-4B | Version 1 | **Version 2** | Human |
 |---|---|---|---|---|---|
-| BERTScore F1 vs human | 0.914 | 0.900 | **0.920** | 0.921 | |
-| ROUGE-L vs human | 0.493 | 0.425 | **0.535** | 0.540 | |
-| Names kept (recall) | 0.587 | 0.593 | **0.614** | 0.623 | |
-| Length ratio vs human | 1.03 | 0.83 | **0.95** | 0.93 | 1.00 |
-| Transition words / 100 words | 0.76 | 0.02 | **0.11** | 0.11 | 0.14 |
-| Stock LLM phrases / text | 0.19 | 0.01 | **0.00** | 0.00 | 0.00 |
-| Average sentence length | 21.6 | 15.1 | **22.6** | 22.5 | 28.1 |
+| BERTScore F1 vs human | 0.918 | 0.903 | 0.927 | **0.929** | |
+| ROUGE-L vs human | 0.522 | 0.434 | 0.569 | **0.580** | |
+| Names kept (recall) | 0.601 | 0.610 | 0.640 | **0.652** | |
+| Length ratio vs human | 1.16 | 0.85 | 0.98 | **0.95** | 1.00 |
+| Transition words / 100 words | 1.13 | 0.02 | 0.11 | **0.11** | 0.15 |
+| Stock LLM phrases / text | 0.70 | 0.01 | 0.03 | **0.03** | 0.02 |
+| Average sentence length | 23.2 | 15.2 | 22.2 | **21.5** | 25.8 |
 
 ## Layout
 
 ```
-pipeline/   01 source Gutenberg -> 02 select -> 03 AI-fy -> 04 build dataset
+pipeline/   01 source Gutenberg, 01b source US federal prose -> 02 select -> 03 AI-fy -> 04 build dataset
 train/      modal_train.py (QLoRA or full fine-tune on Modal), push_to_hub.py (HF upload + GGUF), runs/ (summaries)
 eval/       modal_eval.py (base vs fine-tuned), results/
 serve/      modal_serve.py (OpenAI-compatible vLLM endpoint)
@@ -94,4 +107,4 @@ modal deploy serve/modal_serve.py
 
 Code and model: Apache-2.0. Dataset: CC-BY 4.0. See [`CITATION.cff`](CITATION.cff).
 
-> GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.1.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
+> GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.2.0. Zenodo. https://doi.org/10.5281/zenodo.22843083

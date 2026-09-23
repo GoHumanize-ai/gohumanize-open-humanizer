@@ -19,12 +19,16 @@ datasets:
 
 # GoHumanize Open Humanizer (QLoRA version)
 
-The QLoRA version of the [GoHumanize Open Humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer),
+The version 1 QLoRA build of the [GoHumanize Open Humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer),
 a small open model that rewrites AI-styled English prose into more natural human
-writing. The main published model is a full fine-tune of Qwen3-4B; this repository
-holds the same model trained with QLoRA instead, for anyone who wants the small
-adapter or wants to reproduce training on a 24 GB GPU. The two score the same on
-every measure we use (write-up, section 5.4).
+writing. It was trained on the version 1 dataset (2,000 book passages) with a small
+LoRA adapter, for anyone who wants the adapter or wants to reproduce training on a
+24 GB GPU.
+
+**For most uses, take the main model instead.** Version 2 of the main model adds modern
+prose to the training data and returns modern text nearly unchanged far less often
+(17% of outputs against 20% for this build and 38% for the version 1 full fine-tune;
+write-up, section 6.8).
 
 Educational release, separate from the production systems of GoHumanize.ai.
 **It makes no claim about AI detectors.** Project page: https://gohumanize.ai/open-model

@@ -25,7 +25,7 @@ from importlib.metadata import PackageNotFoundError, version as _pkg_version
 try:  # the single source of truth is pyproject.toml
     __version__ = _pkg_version("gohumanize-open-humanizer")
 except PackageNotFoundError:  # running from a source checkout
-    __version__ = "0.1.7"
+    __version__ = "0.1.8"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
@@ -48,8 +48,8 @@ SYSTEM_PROMPT = (
     "facts and the order of ideas. Return only the rewritten text."
 )
 
-# The model learned from pre-1929 books, so on modern prose it sometimes plays safe and
-# returns the input almost unchanged. Asking for several samples in one request (the
+# On modern prose the model sometimes plays safe and returns the input almost unchanged
+# (about one try in six for version 2). Asking for several samples in one request (the
 # server generates them in parallel, so the wait is the same) and keeping the one that
 # moved furthest from the input avoids handing back a copy.
 DEFAULT_SAMPLES = 5

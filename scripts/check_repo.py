@@ -9,6 +9,8 @@ Checks:
   3. the released dataset matches dataset/stats.json (row counts, fields, splits)
   4. the JSON records in train/runs and eval/results parse and have the expected keys
   5. published links and names stay consistent (no dead project URL, no API host named)
+  6. no human target carries something the AI-styled input lacks (a press-release dateline, a
+     footnote number glued to a sentence, a link): the model learns to invent whatever that is
 """
 
 from __future__ import annotations
@@ -67,6 +69,25 @@ def dataset_matches_stats() -> None:
         check(len(csv_lines) > expected["rows"], f"dataset/{split}.csv looks shorter than the JSONL")
 
 
+def no_learnable_artifacts() -> None:
+    # Same patterns as pipeline/04_build_dataset.py, which strips them. Measured cost of missing
+    # them: a model trained with them in 4 to 6 percent of targets invented datelines and footnote
+    # digits that the published model never produces.
+    dateline = re.compile(r"^[A-Z][A-Z.\- ]{2,25}(,\s*(?:D\.C\.|[A-Z][a-z]{1,3}\.|[A-Z]{2}))?\s*[\u2014\u2013]\s*")
+    footnote = re.compile(r"(?<=[a-z\)\"\u201d\u2019%][.,;:])[0-9]{1,2}(?=\s|$)")
+    link = re.compile(r"https?://|www\.")
+    for split in ("train", "test"):
+        path = ROOT / f"dataset/{split}.jsonl"
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            for name, pat in (("dateline", dateline), ("footnote", footnote), ("link", link)):
+                if pat.search(row["output"]) and not pat.search(row["input"]):
+                    FAILURES.append(f"dataset/{split}.jsonl {row['id']}: target has a {name} "
+                                    f"the input lacks")
+
+
 def run_records() -> None:
     for path in sorted((ROOT / "train/runs").glob("*.json")):
         record = json.loads(path.read_text())
@@ -91,12 +112,15 @@ def links_and_names() -> None:
         check("gohumanize.ai/research" not in text, f"{rel}: links to the old project page URL")
         # The AI-fication generator is named by model, never by the API host it was called through.
         check("openrouter" not in text.lower(), f"{rel}: names an API host that should not be mentioned")
+        # Numbers still to be filled in are marked PENDING while a release is prepared.
+        check("PENDING:" not in text, f"{rel}: has an unfilled PENDING placeholder")
 
 
 def main() -> int:
     python_compiles()
     package_version()
     dataset_matches_stats()
+    no_learnable_artifacts()
     run_records()
     links_and_names()
     if FAILURES:

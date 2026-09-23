@@ -23,6 +23,7 @@ Run from the repo root:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import modal
@@ -40,13 +41,16 @@ SYSTEM_PROMPT = (
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# The published dataset by default. Point DATASET_DIR at a candidate build to train on it
+# without touching the released files.
+DATASET_DIR = REPO_ROOT / os.environ.get("DATASET_DIR", "dataset")
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
     # Unsloth pins the transformers/TRL/PEFT versions it is tested with, so we let it
     # resolve them. The exact versions used are recorded in train_summary.json.
     .pip_install("unsloth", "wandb", "huggingface_hub")
-    .add_local_dir(REPO_ROOT / "dataset", remote_path=REMOTE_DATA)
+    .add_local_dir(DATASET_DIR, remote_path=REMOTE_DATA)
 )
 
 app = modal.App(APP_NAME)
@@ -87,6 +91,7 @@ def _train(
     grad_accum: int,
     run_name: str,
     max_steps: int,
+    seed: int = 13,
 ) -> str:
     import json
     import os
@@ -179,7 +184,7 @@ def _train(
             packing=False,
             report_to="wandb",
             run_name=run_name,
-            seed=13,
+            seed=seed,
             # Full fine-tuning: recompute activations instead of storing them, and keep
             # the AdamW state in 8 bits (about 8 GB instead of 32 GB for 4B weights).
             **({"gradient_checkpointing": True, "optim": "adamw_8bit"} if method == "full" else {}),
@@ -227,29 +232,31 @@ def _train(
 @app.function(image=image, gpu="A10G", timeout=4 * 60 * 60, volumes={REMOTE_OUT: volume}, secrets=secrets)
 def train(epochs: int = 2, learning_rate: float = 2e-4, lora_rank: int = 16, max_seq_length: int = 1024,
           batch_size: int = 4, grad_accum: int = 4, run_name: str = "open-humanizer-v1",
-          max_steps: int = -1) -> str:
+          max_steps: int = -1, seed: int = 13) -> str:
     """QLoRA on an A10G: the setup behind the published v1 model."""
     return _train("qlora", epochs, learning_rate, lora_rank, max_seq_length, batch_size,
-                  grad_accum, run_name, max_steps)
+                  grad_accum, run_name, max_steps, seed)
 
 
 @app.function(image=image, gpu="H100", timeout=4 * 60 * 60, volumes={REMOTE_OUT: volume}, secrets=secrets)
 def train_full(epochs: int = 2, learning_rate: float = 1e-5, max_seq_length: int = 1024,
                batch_size: int = 4, grad_accum: int = 4, run_name: str = "open-humanizer-full-v1",
-               max_steps: int = -1) -> str:
+               max_steps: int = -1, seed: int = 13) -> str:
     """Full fine-tuning on an H100: every weight updated, same data and batch as QLoRA."""
     return _train("full", epochs, learning_rate, 0, max_seq_length, batch_size, grad_accum,
-                  run_name, max_steps)
+                  run_name, max_steps, seed)
 
 
 @app.local_entrypoint()
 def main(method: str = "qlora", epochs: int = 2, learning_rate: float = 0.0, lora_rank: int = 16,
-         run_name: str = "", max_steps: int = -1):
+         run_name: str = "", max_steps: int = -1, seed: int = 13):
     if method not in ("qlora", "full"):
         raise SystemExit("--method must be qlora or full")
     if method == "full":
         print(train_full.remote(epochs=epochs, learning_rate=learning_rate or 1e-5,
-                                run_name=run_name or "open-humanizer-full-v1", max_steps=max_steps))
+                                run_name=run_name or "open-humanizer-full-v1", max_steps=max_steps,
+                                seed=seed))
     else:
         print(train.remote(epochs=epochs, learning_rate=learning_rate or 2e-4, lora_rank=lora_rank,
-                           run_name=run_name or "open-humanizer-v1", max_steps=max_steps))
+                           run_name=run_name or "open-humanizer-v1", max_steps=max_steps,
+                           seed=seed))
