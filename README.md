@@ -10,9 +10,7 @@
 An open, educational text-humanization model: a **full fine-tune of Qwen3-4B**
 (Apache-2.0) that rewrites AI-styled English prose into more natural human writing,
 trained on 2,957 pairs whose human side is public domain: passages from 47 books on
-Project Gutenberg and, since version 2, modern prose from US federal agencies. The
-version 1 QLoRA build, trained in 22 minutes on one rented GPU for about a dollar, is
-published alongside it.
+Project Gutenberg and modern prose from US federal agencies.
 
 This repository is the complete, reproducible pipeline: sourcing and cleaning the
 text, creating the AI-styled inputs, training, evaluation, serving, and the write-up
@@ -21,8 +19,7 @@ that explains every step and every service used.
 | Resource | Where |
 | --- | --- |
 | Write-up (paper) | [`docs/paper.md`](docs/paper.md) |
-| Model weights and GGUF (version 2 full fine-tune) | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
-| Version 1 QLoRA and LoRA adapter | [huggingface.co/gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora) |
+| Model weights and GGUF | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Model card | [`docs/model-card.md`](docs/model-card.md) |
 | Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), card and files in [`dataset/`](dataset/) (2,957 train / 300 test, CC-BY 4.0) |
 | Archived release, DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
@@ -40,32 +37,29 @@ The Open Humanizer is separate from the production models used by GoHumanize.ai 
 **makes no claim about AI detectors**. Its purpose is to show how such a tool is
 built so that developers and researchers can learn from and build on the work.
 
-## Results in one table
+## Results
 
-How often each model hands back modern or literary text nearly unchanged (more than
-90% of the input's words kept), on 300 held-out passages, three tries each. The modern
-passages come from 59 articles never seen in training. Version 2 fixes the problem
-people saw in the demo; the write-up (section 6) explains the cause and the fix.
+On 300 held-out passages, three tries each at temperature 0.9. The modern passages come
+from 59 articles never seen in training.
 
-| | Version 1 QLoRA | Version 1 full | **Version 2 full** |
-|---|---|---|---|
-| Modern passages returned nearly unchanged | 20.0% | 37.7% | **17.0%** |
-| Book passages returned nearly unchanged | 11.3% | 16.7% | **13.3%** |
-| Modern rewrites that lose a number | 34.5% | 31.9% | **28.5%** |
-| Invented datelines, footnote numbers or links (of 900) | 0 | 0 | **0** |
+| | |
+|---|---|
+| Modern passages returned nearly unchanged (more than 90% of the words kept) | 17.0% |
+| Book passages returned nearly unchanged | 13.3% |
+| Modern rewrites that lose a number | 28.5% |
+| Invented datelines, footnote numbers or links (of 900 outputs) | 0 |
 
-And against the human original, the same 300 passages (the base model scored the same
-in both evaluation runs, so the columns are comparable):
+Against the human original, on the same 300 passages:
 
-| Measure | AI-styled input | Base Qwen3-4B | Version 1 | **Version 2** | Human |
-|---|---|---|---|---|---|
-| BERTScore F1 vs human | 0.918 | 0.903 | 0.927 | **0.929** | |
-| ROUGE-L vs human | 0.522 | 0.434 | 0.569 | **0.580** | |
-| Names kept (recall) | 0.601 | 0.610 | 0.640 | **0.652** | |
-| Length ratio vs human | 1.16 | 0.85 | 0.98 | **0.95** | 1.00 |
-| Transition words / 100 words | 1.13 | 0.02 | 0.11 | **0.11** | 0.15 |
-| Stock LLM phrases / text | 0.70 | 0.01 | 0.03 | **0.03** | 0.02 |
-| Average sentence length | 23.2 | 15.2 | 22.2 | **21.5** | 25.8 |
+| Measure | AI-styled input | Base Qwen3-4B | **Open Humanizer** | Human |
+|---|---|---|---|---|
+| BERTScore F1 vs human | 0.918 | 0.903 | **0.929** | |
+| ROUGE-L vs human | 0.522 | 0.434 | **0.580** | |
+| Names kept (recall) | 0.601 | 0.610 | **0.652** | |
+| Length ratio vs human | 1.16 | 0.85 | **0.95** | 1.00 |
+| Transition words / 100 words | 1.13 | 0.02 | **0.11** | 0.15 |
+| Stock LLM phrases / text | 0.70 | 0.01 | **0.03** | 0.02 |
+| Average sentence length | 23.2 | 15.2 | **21.5** | 25.8 |
 
 ## Layout
 
@@ -85,7 +79,7 @@ docs/       paper, model card, notes
 
 Requirements: Python 3.10+, a [Modal](https://modal.com) account for the GPU steps,
 API keys for the AI-fication generators (OpenAI, any OpenAI-compatible host for Llama 3.3 70B, DeepSeek), a Weights &
-Biases key and a Hugging Face token. Total cost under $5.
+Biases key and a Hugging Face token. Total cost under $10.
 
 ```bash
 pip install -r requirements.txt
@@ -94,12 +88,17 @@ python pipeline/01_source_gutenberg.py --out data/passages_raw.jsonl
 python pipeline/02_select.py --raw data/passages_raw.jsonl --train 2000 --test 200 --out-dir data
 python pipeline/03_aify.py --human data/human_train.jsonl --out data/pairs_train.jsonl
 python pipeline/03_aify.py --human data/human_test.jsonl  --out data/pairs_test.jsonl
-python pipeline/04_build_dataset.py --pairs-dir data --out-dir dataset
+python pipeline/01b_source_gov.py --out data/passages_gov.jsonl --per-source 200
+python pipeline/02_select.py --raw data/passages_gov.jsonl --group-key url --cap-per source:450 --prefix human_modern --train 1000 --test 100 --out-dir data
+python pipeline/03_aify.py --human data/human_modern_train.jsonl --out data/pairs_modernh_train.jsonl --register hard
+python pipeline/03_aify.py --human data/human_modern_test.jsonl  --out data/pairs_modernh_test.jsonl  --register hard
+python pipeline/04_build_dataset.py --pairs-dir data --prefixes pairs,pairs_modernh --holdout-by url --out-dir dataset
 modal run train/modal_train.py --max-steps 3 --run-name smoke     # validate the setup first
-modal run train/modal_train.py --run-name open-humanizer-v1
-modal run eval/modal_eval.py --run-name open-humanizer-v1
-modal run train/push_to_hub.py::push --run-name open-humanizer-v1 --repo <org>/<model>
-modal run train/push_to_hub.py::gguf --run-name open-humanizer-v1 --repo <org>/<model>
+modal run --detach train/modal_train.py --method full --learning-rate 2e-5 --seed 13 --run-name open-humanizer-full-v5-s13
+modal run eval/modal_eval.py --run-name open-humanizer-full-v5-s13 --max-rows 300
+modal run --detach eval/modal_copy_rate.py --runs open-humanizer-full-v5-s13
+modal run train/push_to_hub.py::push --run-name open-humanizer-full-v5-s13 --repo <org>/<model>
+modal run train/push_to_hub.py::gguf --run-name open-humanizer-full-v5-s13 --repo <org>/<model>
 modal deploy serve/modal_serve.py
 ```
 
