@@ -64,6 +64,14 @@ def main() -> int:
     assert _pick_most_rewritten(SOURCE, [SOURCE, TOO_SHORT]) == SOURCE
     assert _pick_most_rewritten(SOURCE, [SOURCE, REWRITE]) == REWRITE
     assert _pick_most_rewritten(SOURCE, []) == ""
+    quoted = "\u201c" + REWRITE + "\u201d"
+    assert _pick_most_rewritten(SOURCE, [quoted]) == REWRITE, "quotes around the whole answer are removed"
+    # Changes more than REWRITE, so only the quote rule can reject it.
+    invented = "Hours of argument, then a deal. \u201cWe finally agreed on it,\u201d one member said."
+    assert _word_overlap(SOURCE, invented) < _word_overlap(SOURCE, REWRITE)
+    assert _pick_most_rewritten(SOURCE, [invented, REWRITE]) == REWRITE, "a rewrite that adds quotes loses"
+    assert _pick_most_rewritten(SOURCE, [invented]) == invented, "kept when it is the only rewrite"
+    print("quotes: wrapping removed, invented quotes avoided")
     print("selection helpers OK")
 
     servers = [stub("multi", 8171), stub("single", 8172), stub("stubborn", 8173)]
