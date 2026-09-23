@@ -72,6 +72,13 @@ def main() -> int:
     assert _pick_most_rewritten(SOURCE, [invented, REWRITE]) == REWRITE, "a rewrite that adds quotes loses"
     assert _pick_most_rewritten(SOURCE, [invented]) == invented, "kept when it is the only rewrite"
     print("quotes: wrapping removed, invented quotes avoided")
+    num_src = "It is worth noting that the agency ultimately allocated $2.4 million to 12 projects in 2025."
+    lost = "The agency gave a few million dollars to a dozen projects last year, after a long review of them."
+    kept = "Last year, 2025, the agency put $2.4 million into 12 projects after its review."
+    assert _word_overlap(num_src, lost) < _word_overlap(num_src, kept)
+    assert _pick_most_rewritten(num_src, [lost, kept]) == kept, "a rewrite that keeps the numbers wins"
+    assert _pick_most_rewritten(num_src, [lost, num_src]) == lost, "a copy never wins for keeping numbers"
+    print("numbers: rewrite keeping every figure preferred, never a copy")
     print("selection helpers OK")
 
     servers = [stub("multi", 8171), stub("single", 8172), stub("stubborn", 8173)]
