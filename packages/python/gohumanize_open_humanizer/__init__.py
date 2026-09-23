@@ -25,7 +25,7 @@ from importlib.metadata import PackageNotFoundError, version as _pkg_version
 try:  # the single source of truth is pyproject.toml
     __version__ = _pkg_version("gohumanize-open-humanizer")
 except PackageNotFoundError:  # running from a source checkout
-    __version__ = "0.1.9"
+    __version__ = "0.1.10"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
@@ -74,15 +74,37 @@ def _word_overlap(source: str, rewrite: str) -> float:
     return kept / total
 
 
+# The model sometimes adds quotation marks the input did not have: it wraps the whole
+# answer in quotes, or turns a plain statement into a quote. Both put words in quotes that
+# nobody said, so drop quotes wrapped around the whole answer and prefer rewrites that do
+# not add any.
+_QUOTES = ('"', "\u201c", "\u201d")
+
+
+def _count_quotes(text: str) -> int:
+    return sum(text.count(q) for q in _QUOTES)
+
+
+def _unwrap_quotes(source: str, rewrite: str) -> str:
+    """Remove quotation marks around the whole rewrite when the source was not quoted."""
+    t = rewrite.strip()
+    if (len(t) > 2 and t[0] in _QUOTES and t[-1] in _QUOTES
+            and source.strip()[:1] not in _QUOTES and not _count_quotes(t[1:-1])):
+        return t[1:-1].strip()
+    return rewrite
+
+
 def _pick_most_rewritten(source: str, candidates: list[str]) -> str:
-    """The candidate that changed the most, among those of a sensible length."""
-    candidates = [c for c in candidates if c]
+    """The candidate that changed the most, among those of a sensible length that do not
+    add quotation marks."""
+    candidates = [_unwrap_quotes(source, c) for c in candidates if c]
     if len(candidates) < 2:
         return candidates[0] if candidates else ""
     source_words = len(source.split()) or 1
-    right_length = [c for c in candidates
-                    if MIN_LENGTH_RATIO <= len(c.split()) / source_words <= MAX_LENGTH_RATIO]
-    return min(right_length or candidates, key=lambda c: _word_overlap(source, c))
+    pool = [c for c in candidates
+            if MIN_LENGTH_RATIO <= len(c.split()) / source_words <= MAX_LENGTH_RATIO] or candidates
+    no_new_quotes = [c for c in pool if _count_quotes(c) <= _count_quotes(source)]
+    return min(no_new_quotes or pool, key=lambda c: _word_overlap(source, c))
 
 
 class Humanizer:
