@@ -10,9 +10,9 @@ Runs on Modal because the weights live on the Modal volume. Two functions:
               in Ollama / LM Studio / llama.cpp.
 
 Run:
-    modal run train/push_to_hub.py::push --run-name open-humanizer-full-lr2e5 --repo gohumanize/gohumanize-open-humanizer --no-private --replace
+    modal run train/push_to_hub.py::push --run-name open-humanizer-full-v5-s13 --repo gohumanize/gohumanize-open-humanizer --no-private --replace
     modal run train/push_to_hub.py::push --run-name open-humanizer-v1 --repo gohumanize/gohumanize-open-humanizer-qlora --card-name model-card-qlora.md
-    modal run train/push_to_hub.py::gguf --run-name open-humanizer-full-lr2e5 --repo gohumanize/gohumanize-open-humanizer
+    modal run train/push_to_hub.py::gguf --run-name open-humanizer-full-v5-s13 --repo gohumanize/gohumanize-open-humanizer
 """
 
 from __future__ import annotations
