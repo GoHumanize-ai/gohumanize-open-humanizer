@@ -1,46 +1,58 @@
 {
   "splits": {
     "train": {
-      "rows": 2000,
+      "rows": 2957,
       "books": 47,
+      "articles": 532,
+      "source": {
+        "us-federal": 957,
+        "gutenberg": 2000
+      },
       "category": {
+        "modern": 957,
         "nonfiction": 532,
         "fiction": 1468
       },
       "generator": {
-        "meta-llama/llama-3.3-70b-instruct": 504,
-        "deepseek-chat": 487,
-        "gpt-4o-mini": 1009
+        "deepseek-chat": 720,
+        "gpt-4o-mini": 1516,
+        "meta-llama/llama-3.3-70b-instruct": 721
       },
       "style": {
-        "formal_polished": 498,
-        "explanatory": 503,
-        "hedged_helpful": 497,
-        "corporate_clean": 502
+        "hedged_helpful": 738,
+        "formal_polished": 743,
+        "corporate_clean": 732,
+        "explanatory": 744
       },
-      "avg_input_words": 154.7,
-      "avg_output_words": 147.4
+      "avg_input_words": 205.1,
+      "avg_output_words": 177.7
     },
     "test": {
-      "rows": 200,
+      "rows": 300,
       "books": 47,
+      "articles": 59,
+      "source": {
+        "us-federal": 100,
+        "gutenberg": 200
+      },
       "category": {
+        "modern": 100,
         "nonfiction": 58,
         "fiction": 142
       },
       "generator": {
-        "gpt-4o-mini": 150,
-        "deepseek-chat": 23,
-        "meta-llama/llama-3.3-70b-instruct": 27
+        "meta-llama/llama-3.3-70b-instruct": 58,
+        "gpt-4o-mini": 201,
+        "deepseek-chat": 41
       },
       "style": {
-        "corporate_clean": 49,
-        "formal_polished": 51,
-        "explanatory": 50,
-        "hedged_helpful": 50
+        "corporate_clean": 77,
+        "hedged_helpful": 78,
+        "explanatory": 73,
+        "formal_polished": 72
       },
-      "avg_input_words": 152.5,
-      "avg_output_words": 148.4
+      "avg_input_words": 207.1,
+      "avg_output_words": 179.1
     }
   },
   "books": [
@@ -372,6 +384,24 @@
       "author": "Emily Brontë",
       "category": "fiction",
       "train_rows": 42
+    }
+  ],
+  "agencies": [
+    {
+      "agency": "Department of Energy",
+      "train_rows": 11
+    },
+    {
+      "agency": "Federal Reserve",
+      "train_rows": 350
+    },
+    {
+      "agency": "NASA",
+      "train_rows": 198
+    },
+    {
+      "agency": "National Institute of Standards and Technology",
+      "train_rows": 398
     }
   ]
 }

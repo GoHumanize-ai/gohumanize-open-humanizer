@@ -112,6 +112,8 @@ def links_and_names() -> None:
         check("gohumanize.ai/research" not in text, f"{rel}: links to the old project page URL")
         # The AI-fication generator is named by model, never by the API host it was called through.
         check("openrouter" not in text.lower(), f"{rel}: names an API host that should not be mentioned")
+        # Numbers still to be filled in are marked PENDING while a release is prepared.
+        check("PENDING:" not in text, f"{rel}: has an unfilled PENDING placeholder")
 
 
 def main() -> int:
