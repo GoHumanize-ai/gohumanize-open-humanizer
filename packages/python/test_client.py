@@ -77,8 +77,9 @@ def main() -> int:
     kept = "Last year, 2025, the agency put $2.4 million into 12 projects after its review."
     assert _word_overlap(num_src, lost) < _word_overlap(num_src, kept)
     assert _pick_most_rewritten(num_src, [lost, kept]) == kept, "a rewrite that keeps the numbers wins"
-    assert _pick_most_rewritten(num_src, [lost, num_src]) == lost, "a copy never wins for keeping numbers"
-    print("numbers: rewrite keeping every figure preferred, never a copy")
+    assert _pick_most_rewritten(num_src, [lost, num_src]) == num_src, "keeping the numbers beats changing more"
+    assert _pick_most_rewritten(num_src, [lost, num_src, kept]) == kept, "a real rewrite keeping them beats both"
+    print("numbers: a rewrite keeping every figure preferred, even over a bigger change")
     print("selection helpers OK")
 
     servers = [stub("multi", 8171), stub("single", 8172), stub("stubborn", 8173)]

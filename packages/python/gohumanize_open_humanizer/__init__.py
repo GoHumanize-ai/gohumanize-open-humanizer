@@ -26,7 +26,7 @@ from importlib.metadata import PackageNotFoundError, version as _pkg_version
 try:  # the single source of truth is pyproject.toml
     __version__ = _pkg_version("gohumanize-open-humanizer")
 except PackageNotFoundError:  # running from a source checkout
-    __version__ = "0.1.11"
+    __version__ = "0.1.12"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
@@ -95,9 +95,10 @@ def _unwrap_quotes(source: str, rewrite: str) -> str:
     return rewrite
 
 
-# About a quarter of rewrites of number-heavy text drop a figure. A rewrite that keeps
-# every number of the source is preferred, but only among real rewrites: a near-copy
-# keeps every number without trying.
+# About a quarter of rewrites of number-heavy text drop a figure, sometimes by cutting
+# the sentence that holds it (a price, a date). A rewrite that keeps every number of the
+# source is preferred even over one that changed more: a light rewrite is better than
+# one that loses a fact.
 _NUMBER = re.compile(r"\d[\d,.]*")
 
 
@@ -112,7 +113,8 @@ def _prefer(pool: list[str], keep) -> list[str]:
 
 def _pick_most_rewritten(source: str, candidates: list[str]) -> str:
     """The candidate that changed the most, among those of a sensible length, preferring
-    in turn: no added quotation marks, a real rewrite, every number of the source kept."""
+    in turn: no added quotation marks, every number of the source kept, a real rewrite
+    rather than a near-copy."""
     candidates = [_unwrap_quotes(source, c) for c in candidates if c]
     if len(candidates) < 2:
         return candidates[0] if candidates else ""
@@ -120,8 +122,8 @@ def _pick_most_rewritten(source: str, candidates: list[str]) -> str:
     source_numbers = _numbers(source)
     pool = _prefer(candidates, lambda c: MIN_LENGTH_RATIO <= len(c.split()) / source_words <= MAX_LENGTH_RATIO)
     pool = _prefer(pool, lambda c: _count_quotes(c) <= _count_quotes(source))
-    pool = _prefer(pool, lambda c: _word_overlap(source, c) <= NEAR_COPY)
     pool = _prefer(pool, lambda c: source_numbers <= _numbers(c))
+    pool = _prefer(pool, lambda c: _word_overlap(source, c) <= NEAR_COPY)
     return min(pool, key=lambda c: _word_overlap(source, c))
 
 
