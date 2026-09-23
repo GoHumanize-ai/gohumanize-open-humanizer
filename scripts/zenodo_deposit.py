@@ -23,6 +23,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 import requests
@@ -81,6 +82,23 @@ METADATA = {
 }
 
 
+
+def _call(method: str, url: str, tries: int = 5, **kw) -> requests.Response:
+    """Zenodo's file API sometimes answers 500 or 504 under load; retry those with a pause.
+    A file handle that is re-read for each attempt must be passed as a path in `path`."""
+    path = kw.pop("path", None)
+    for attempt in range(1, tries + 1):
+        if path is not None:
+            with open(path, "rb") as fh:
+                r = requests.request(method, url, data=fh, **kw)
+        else:
+            r = requests.request(method, url, **kw)
+        if r.status_code < 500 or attempt == tries:
+            return r
+        print(f"  Zenodo answered {r.status_code}, retrying in {10 * attempt}s")
+        time.sleep(10 * attempt)
+    return r
+
 def token() -> str:
     t = os.getenv("ZENODO_TOKEN") or Path.home().joinpath(".zenodo_token").read_text().strip()
     if not t:
@@ -109,9 +127,7 @@ def upload_all(tok: str, dep: dict) -> None:
                  ROOT / "dataset" / "test.jsonl", ROOT / "dataset" / "README.md"]
         for f in files:
             name = f.name if f.parent.name != "dataset" else f"dataset-{f.name}"
-            with f.open("rb") as fh:
-                up = requests.put(f"{bucket}/{name}", data=fh, headers=h, timeout=600)
-                up.raise_for_status()
+            _call("PUT", f"{bucket}/{name}", path=f, headers=h, timeout=600).raise_for_status()
             print("uploaded", name)
 
 
@@ -145,7 +161,9 @@ def refresh(tok: str, dep_id: int) -> None:
         sys.exit(f"deposit {dep_id} is already published; make a new version instead")
     # Files from an earlier run under a different name would otherwise linger.
     for f in dep.get("files", []):
-        requests.delete(f["links"]["self"], headers=h, timeout=60).raise_for_status()
+        r = _call("DELETE", f["links"]["self"], headers=h, timeout=60)
+        if r.status_code != 404:  # already gone after an earlier interrupted run
+            r.raise_for_status()
         print("removed", f["filename"])
     upload_all(tok, dep)
     set_metadata(tok, dep)
