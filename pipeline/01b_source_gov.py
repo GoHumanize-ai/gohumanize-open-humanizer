@@ -42,7 +42,17 @@ FEEDS = [
     ("nasa-news", "https://www.nasa.gov/news-release/feed/", "NASA"),
     ("nasa-science", "https://science.nasa.gov/feed/", "NASA"),
     ("energy", "https://www.energy.gov/rss/articles.xml", "Department of Energy"),
+    # Voice of America is a federal broadcaster, so its own reporting is public domain, and it
+    # writes plain journalistic prose rather than press-release prose. Articles that draw on
+    # AP, Reuters or AFP copy are NOT public domain and are dropped whole, see WIRE below.
+    ("voa", "https://www.voanews.com/api/epiqq", "Voice of America"),
 ]
+
+# VOA marks anything built on agency copy with a line like "Some information for this report
+# came from The Associated Press." That copy is under the agency's rights, not public domain,
+# so the whole article is skipped rather than the line alone.
+WIRE = re.compile(r"(information for this report came from|"
+                  r"(associated press|reuters|agence france|afp) contributed)", re.I)
 # Paginated listings, used when the feeds alone do not give enough articles.
 # (name, url template, pages, agency, link pattern, site root for relative links)
 LISTINGS = [
@@ -69,6 +79,11 @@ BOILERPLATE = re.compile(
     r"locked padlock|sensitive information only on official|an official website|"
     r"before sharing sensitive information)", re.I)
 FOOTNOTE = re.compile(r"^\s*(\d+\.|\[\d+\]|see, e\.g\.|footnote)", re.I)
+
+# Press-release datelines ("GAITHERSBURG, Md. - ", "WASHINGTON - "). They are boilerplate, and a
+# model trained on targets that open this way learns to invent a dateline for any text that smells
+# like an announcement, which is a fabrication rather than a rewrite.
+DATELINE = re.compile(r"^[A-Z][A-Z.\- ]{2,25}(,\s*(?:D\.C\.|[A-Z][a-z]{1,3}\.|[A-Z]{2}))?\s*[—–]\s*")
 
 
 class Paragraphs(HTMLParser):
@@ -140,10 +155,13 @@ def article_text(url: str) -> list[str]:
     html = get(url)
     if not html:
         return []
+    if WIRE.search(html):  # partly agency copy, so not ours to redistribute
+        return []
     parser = Paragraphs()
     parser.feed(html)
     keep = []
     for para in parser.out:
+        para = DATELINE.sub("", para)
         if len(para.split()) < 25:  # headings, captions, one-line notes
             continue
         if BOILERPLATE.search(para) or FOOTNOTE.match(para):

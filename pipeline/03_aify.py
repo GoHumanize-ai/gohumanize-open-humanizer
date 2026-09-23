@@ -43,6 +43,33 @@ SYSTEM = (
     "commentary, or a preamble. Return only the rewritten passage."
 )
 
+# On modern factual prose the instruction above leaves almost nothing to change: names, numbers
+# and quotations have to survive, the length is pinned, and the order of ideas is fixed, so the
+# rewrite comes back nearly identical. Measured input-to-target overlap was 0.68 for agency text
+# against 0.54 for the books, and the model trained on those pairs learned that modern text needs
+# no change. This register keeps the facts but forbids keeping the structure.
+SYSTEM_HARD = (
+    "You rewrite passages into the way a large language model writes when asked to produce "
+    "polished prose. Every fact, name, number and quotation must survive, but nothing about the "
+    "wording or the sentence structure should. Do not reuse the passage's sentence boundaries: "
+    "merge short sentences and split long ones. Do not add headings, lists, commentary or a "
+    "preamble. Return only the rewritten passage."
+)
+HARD_RULES = (
+    "\n\nApply these as well:\n"
+    "- Open most sentences with a connective or framing phrase (Additionally, Furthermore, "
+    "Notably, It is worth noting that, In essence, Ultimately).\n"
+    "- Turn verbs into noun phrases where you can: 'decided' becomes 'reached a decision', "
+    "'fell' becomes 'experienced a decline'.\n"
+    "- Replace concrete or idiomatic wording with general, abstract equivalents.\n"
+    "- Hedge claims with 'may', 'can often', 'tends to', 'appears to'.\n"
+    "- Make every sentence a similar length, roughly 22 to 30 words, so the rhythm is flat.\n"
+    "- Add framing and summarising clauses so the passage runs 20 to 40 percent longer than the "
+    "original, and close with a tidy summarising sentence.\n"
+    "- Use no contractions, no fragments, no rhetorical questions, no dashes."
+)
+REGISTER = "standard"
+
 STYLES = {
     "formal_polished": (
         "Rewrite in a polished, formal register: expand contractions, prefer general and "
@@ -160,7 +187,10 @@ def reject_reason(src: str, out: str) -> str | None:
     if not out:
         return "empty"
     a, b = len(src.split()), len(out.split())
-    if b < 0.6 * a or b > 1.6 * a:
+    # The hard register asks for a passage 20 to 40 percent longer, and some generators
+    # overshoot that, so it gets more headroom than the standard register.
+    ceiling = 1.9 if REGISTER == "hard" else 1.6
+    if b < 0.6 * a or b > ceiling * a:
         return f"length {b}/{a}"
     if out.lstrip().startswith(("#", "-", "*", "1.")):
         return "markdown"
@@ -168,7 +198,7 @@ def reject_reason(src: str, out: str) -> str | None:
 
 
 def aify(row: dict, provider: str, style: str) -> dict | None:
-    prompt = STYLES[style]
+    prompt = STYLES[style] + (HARD_RULES if REGISTER == "hard" else "")
     for attempt in range(5):
         try:
             out = clean_output(CALLERS[provider](prompt, row["text"]))
@@ -203,7 +233,16 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=13)
     ap.add_argument("--limit", type=int, default=0, help="only process the first N rows (smoke test)")
     ap.add_argument("--only-provider", default="", help="force one provider (testing)")
+    ap.add_argument("--register", choices=("standard", "hard"), default="standard",
+                    help="how far the AI-styled side is pushed from the original; use hard for "
+                         "modern factual prose, which the standard register barely changes")
     args = ap.parse_args()
+
+    global SYSTEM, REGISTER
+    REGISTER = args.register
+    if args.register == "hard":
+        SYSTEM = SYSTEM_HARD
+    log.info("register: %s", args.register)
 
     providers = {p: w for p, w in PROVIDER_WEIGHTS.items() if w > 0}
     if args.only_provider:
