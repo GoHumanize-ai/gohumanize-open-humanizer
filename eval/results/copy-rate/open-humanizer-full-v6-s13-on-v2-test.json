@@ -1,0 +1,20 @@
+{
+  "samples_per_passage": 3,
+  "temperature": 0.9,
+  "models": {
+    "open-humanizer-full-v6-s13": {
+      "modern": {
+        "outputs": 300,
+        "near_copy_pct": 17.7,
+        "rewrites_losing_a_number_pct": 17.8,
+        "invented": 0
+      },
+      "literary": {
+        "outputs": 600,
+        "near_copy_pct": 12.8,
+        "rewrites_losing_a_number_pct": 20.0,
+        "invented": 0
+      }
+    }
+  }
+}

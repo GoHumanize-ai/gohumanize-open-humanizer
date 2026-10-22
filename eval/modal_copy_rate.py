@@ -15,7 +15,7 @@ setting) through vLLM (the demo's engine). Per output it records:
 
 Run (the models must be on the Modal volume):
     DATASET_DIR=dataset modal run --detach eval/modal_copy_rate.py \\
-        --runs open-humanizer-full-v5-s13,open-humanizer-full-lr2e5
+        --runs open-humanizer-full-v6-s13,open-humanizer-full-v5-s13
 Writes eval/results/copy-rate/<runs>.json with the summary per model.
 """
 
@@ -31,8 +31,13 @@ import modal
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATASET_DIR = REPO_ROOT / os.environ.get("DATASET_DIR", "dataset")
 VOLUME = modal.Volume.from_name("gohumanize-open-humanizer-models")
+# Pinned to the vLLM version the demo endpoint runs. Unpinned, a rebuild picked up 0.30, which
+# measured the same model at 0.7% near-copies instead of 17%, so figures from different vLLM
+# versions are not comparable. 0.30 also needs nvcc for its FlashInfer sampler; the slim image
+# has none, hence the switch, which 0.22.1 ignores.
 image = (modal.Image.debian_slim(python_version="3.11")
-         .pip_install("vllm")
+         .pip_install("vllm==0.22.1")
+         .env({"VLLM_USE_FLASHINFER_SAMPLER": "0"})
          .add_local_file(DATASET_DIR / "test.jsonl", remote_path="/data/test.jsonl"))
 app = modal.App("gohumanize-open-humanizer-copy-rate")
 

@@ -1,0 +1,42 @@
+{
+  "run_name": "open-humanizer-full-v6-s13",
+  "rows": 300,
+  "systems": {
+    "ai_input": {
+      "bertscore_f1_vs_human": 0.9248,
+      "rougeL_vs_human": 0.5597,
+      "cap_token_recall": 0.6373,
+      "length_ratio_vs_human": 1.113,
+      "contractions_per_100w": 0.24,
+      "transitions_per_100w": 0.966,
+      "stock_phrases_per_text": 0.527,
+      "avg_sentence_len": 22.92
+    },
+    "base": {
+      "bertscore_f1_vs_human": 0.9067,
+      "rougeL_vs_human": 0.4535,
+      "cap_token_recall": 0.6214,
+      "length_ratio_vs_human": 0.842,
+      "contractions_per_100w": 0.585,
+      "transitions_per_100w": 0.02,
+      "stock_phrases_per_text": 0.013,
+      "avg_sentence_len": 15.32
+    },
+    "finetuned": {
+      "bertscore_f1_vs_human": 0.9347,
+      "rougeL_vs_human": 0.6163,
+      "cap_token_recall": 0.6924,
+      "length_ratio_vs_human": 0.97,
+      "contractions_per_100w": 0.058,
+      "transitions_per_100w": 0.086,
+      "stock_phrases_per_text": 0.033,
+      "avg_sentence_len": 22.6
+    },
+    "human_target": {
+      "contractions_per_100w": 0.161,
+      "transitions_per_100w": 0.149,
+      "stock_phrases_per_text": 0.023,
+      "avg_sentence_len": 25.83
+    }
+  }
+}

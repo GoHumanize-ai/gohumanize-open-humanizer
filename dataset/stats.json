@@ -14,17 +14,16 @@
         "fiction": 1468
       },
       "generator": {
-        "deepseek-chat": 720,
-        "gpt-4o-mini": 1516,
-        "meta-llama/llama-3.3-70b-instruct": 721
+        "deepseek-chat": 953,
+        "gpt-4o-mini": 2004
       },
       "style": {
-        "hedged_helpful": 738,
-        "formal_polished": 743,
-        "corporate_clean": 732,
-        "explanatory": 744
+        "hedged_helpful": 741,
+        "formal_polished": 733,
+        "corporate_clean": 726,
+        "explanatory": 757
       },
-      "avg_input_words": 205.1,
+      "avg_input_words": 196.6,
       "avg_output_words": 177.7
     },
     "test": {
@@ -41,17 +40,16 @@
         "fiction": 142
       },
       "generator": {
-        "meta-llama/llama-3.3-70b-instruct": 58,
-        "gpt-4o-mini": 201,
-        "deepseek-chat": 41
+        "gpt-4o-mini": 233,
+        "deepseek-chat": 67
       },
       "style": {
-        "corporate_clean": 77,
-        "hedged_helpful": 78,
-        "explanatory": 73,
-        "formal_polished": 72
+        "formal_polished": 73,
+        "hedged_helpful": 77,
+        "explanatory": 78,
+        "corporate_clean": 72
       },
-      "avg_input_words": 207.1,
+      "avg_input_words": 199.4,
       "avg_output_words": 179.1
     }
   },
