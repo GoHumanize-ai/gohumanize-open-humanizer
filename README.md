@@ -9,7 +9,7 @@
 
 An open, educational text-humanization model: a **full fine-tune of Qwen3-4B**
 (Apache-2.0) that rewrites AI-styled English prose into more natural human writing,
-trained on 2,957 pairs whose human side is public domain: passages from 47 books on
+trained on 2,629 pairs whose human side is public domain: passages from 47 books on
 Project Gutenberg and modern prose from US federal agencies.
 
 This repository is the complete, reproducible pipeline: sourcing and cleaning the
@@ -21,7 +21,7 @@ that explains every step and every service used.
 | Write-up (paper) | [`docs/paper.md`](docs/paper.md) |
 | Model weights and GGUF | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Model card | [`docs/model-card.md`](docs/model-card.md) |
-| Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), card and files in [`dataset/`](dataset/) (2,957 train / 300 test, CC-BY 4.0) |
+| Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), card and files in [`dataset/`](dataset/) (2,629 train / 254 test, CC-BY 4.0) |
 | Archived release, DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Evaluation results | [`eval/results/`](eval/results/) |
 | Training runs | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer) |
@@ -39,31 +39,30 @@ built so that developers and researchers can learn from and build on the work.
 
 ## Results
 
-On 300 held-out passages, three tries each at temperature 0.9. The modern passages come
-from 59 articles never seen in training.
+On 254 held-out passages, three tries each at temperature 0.9. The modern passages come
+from 30 articles never seen in training.
 
 | | |
 |---|---|
-| Modern passages returned nearly unchanged (more than 90% of the words kept) | 25.3% |
-| Book passages returned nearly unchanged | 17.5% |
-| Modern rewrites that lose a number | 18.3% |
-| Invented datelines, footnote numbers or links (of 900 outputs) | 0 |
+| Modern passages returned nearly unchanged (more than 90% of the words kept) | 29.0% |
+| Book passages returned nearly unchanged | 19.2% |
+| Modern rewrites that lose a number | 22.1% |
+| Invented datelines, footnote numbers or links (of 762 outputs) | 0 |
 
-The AI-styled test inputs were regenerated for version 3 and are milder rewrites than before,
-which leaves the model less to change. On the previous test set the same model returns 17.7% of
-modern and 12.8% of book passages nearly unchanged.
+The modern figures rest on 162 outputs from 54 passages, so a difference of a few points is
+within noise.
 
-Against the human original, on the same 300 passages:
+Against the human original, on the same 254 passages:
 
 | Measure | AI-styled input | Base Qwen3-4B | **Open Humanizer** | Human |
 |---|---|---|---|---|
-| BERTScore F1 vs human | 0.925 | 0.907 | **0.935** | |
-| ROUGE-L vs human | 0.560 | 0.454 | **0.616** | |
-| Names kept (recall) | 0.637 | 0.621 | **0.692** | |
-| Length ratio vs human | 1.11 | 0.84 | **0.97** | 1.00 |
-| Transition words / 100 words | 0.97 | 0.02 | **0.09** | 0.15 |
-| Stock LLM phrases / text | 0.53 | 0.01 | **0.03** | 0.02 |
-| Average sentence length | 22.9 | 15.3 | **22.6** | 25.8 |
+| BERTScore F1 vs human | 0.923 | 0.905 | **0.931** | |
+| ROUGE-L vs human | 0.542 | 0.444 | **0.595** | |
+| Names kept (recall) | 0.619 | 0.604 | **0.673** | |
+| Length ratio vs human | 1.08 | 0.83 | **0.97** | 1.00 |
+| Transition words / 100 words | 0.88 | 0.02 | **0.12** | 0.16 |
+| Stock LLM phrases / text | 0.40 | 0.00 | **0.02** | 0.01 |
+| Average sentence length | 22.6 | 15.2 | **22.6** | 26.7 |
 
 ## Layout
 
@@ -96,13 +95,13 @@ python pipeline/01b_source_gov.py --out data/passages_gov.jsonl --per-source 200
 python pipeline/02_select.py --raw data/passages_gov.jsonl --group-key url --cap-per source:450 --prefix human_modern --train 1000 --test 100 --out-dir data
 python pipeline/03_aify.py --human data/human_modern_train.jsonl --out data/pairs_modernh_train.jsonl --register hard
 python pipeline/03_aify.py --human data/human_modern_test.jsonl  --out data/pairs_modernh_test.jsonl  --register hard
-python pipeline/04_build_dataset.py --pairs-dir data --prefixes pairs,pairs_modernh --holdout-by url --out-dir dataset
+python pipeline/04_build_dataset.py --pairs-dir data --prefixes pairs,pairs_modernh --holdout-by url --rights-audit dataset/federal-rights-audit.csv --out-dir dataset
 modal run train/modal_train.py --max-steps 3 --run-name smoke     # validate the setup first
-modal run --detach train/modal_train.py --method full --learning-rate 2e-5 --seed 13 --run-name open-humanizer-full-v6-s13
-modal run eval/modal_eval.py --run-name open-humanizer-full-v6-s13 --max-rows 300
-modal run --detach eval/modal_copy_rate.py --runs open-humanizer-full-v6-s13
-modal run train/push_to_hub.py::push --run-name open-humanizer-full-v6-s13 --repo <org>/<model>
-modal run train/push_to_hub.py::gguf --run-name open-humanizer-full-v6-s13 --repo <org>/<model>
+modal run --detach train/modal_train.py --method full --learning-rate 2e-5 --seed 13 --run-name open-humanizer-full-v7-s13
+modal run eval/modal_eval.py --run-name open-humanizer-full-v7-s13 --max-rows 300
+modal run --detach eval/modal_copy_rate.py --runs open-humanizer-full-v7-s13
+modal run train/push_to_hub.py::push --run-name open-humanizer-full-v7-s13 --repo <org>/<model>
+modal run train/push_to_hub.py::gguf --run-name open-humanizer-full-v7-s13 --repo <org>/<model>
 modal deploy serve/modal_serve.py
 ```
 
@@ -110,4 +109,4 @@ modal deploy serve/modal_serve.py
 
 Code and model: Apache-2.0. Dataset: CC-BY 4.0. See [`CITATION.cff`](CITATION.cff).
 
-> GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.3.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
+> GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.4.0. Zenodo. https://doi.org/10.5281/zenodo.22843083

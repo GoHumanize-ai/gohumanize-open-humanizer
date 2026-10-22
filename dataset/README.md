@@ -18,7 +18,7 @@ tags:
 
 # GoHumanize Open Humanizer Dataset
 
-2,957 training pairs and 300 test pairs for teaching a language model to rewrite
+2,629 training pairs and 254 test pairs for teaching a language model to rewrite
 AI-styled English prose into natural human writing. Each pair is:
 
 - `input`: a passage rewritten by a large language model in the register typical of LLM output
@@ -41,16 +41,19 @@ All human text is in the public domain in the United States.
   originals published before 1929. Translations were excluded on purpose (a translation can
   carry a newer copyright than the original work). Project Gutenberg boilerplate, footnote
   markers, illustration tags and typographic artefacts were stripped.
-- **Modern prose (957 train, 100 test), added in version 2**: news releases, features and speeches
-  from four US federal agencies. Works of the US federal government are not subject to copyright
-  in the United States (17 U.S.C. 105). Site banners, navigation, press-release datelines,
-  footnote numbers and media notices were stripped or dropped.
+- **Modern prose (629 train, 54 test), added in version 2**: news releases, features and speeches
+  from three US federal agencies. Works of the US federal government are not subject to copyright
+  in the United States (17 U.S.C. 105), but an agency site can also carry text by outside authors.
+  Since version 4 the dataset keeps only passages whose source page was checked and has a
+  public-domain basis: a federal-employee author or an agency statement that the text is public
+  domain. Passages from NASA and part of NIST were dropped because that could not be established
+  for them; the page-by-page verdicts are in `federal-rights-audit.csv`. Site banners, navigation,
+  press-release datelines, footnote numbers and media notices were stripped or dropped.
 
 | Agency | Train rows |
 |---|---|
-| National Institute of Standards and Technology | 398 |
 | Federal Reserve | 350 |
-| NASA | 198 |
+| National Institute of Standards and Technology | 268 |
 | Department of Energy | 11 |
 
 Passages are groups of consecutive paragraphs of 80 to 300 words.
@@ -66,12 +69,12 @@ modern text unchanged (see the write-up, section 6).
 
 | Generator | Train rows | Test rows |
 |---|---|---|
-| gpt-4o-mini | 2004 | 233 |
-| deepseek-chat | 953 | 67 |
+| gpt-4o-mini | 1783 | 204 |
+| deepseek-chat | 846 | 50 |
 
 Dataset licence: **CC-BY 4.0**. Please cite as:
 
-> GoHumanize team (2026). *GoHumanize Open Humanizer Dataset.* Part of: GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.3.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
+> GoHumanize team (2026). *GoHumanize Open Humanizer Dataset.* Part of: GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.4.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
 
 ## Links
 
@@ -80,7 +83,7 @@ Dataset licence: **CC-BY 4.0**. Please cite as:
 | Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | GoHumanize (the product this research comes from) | [gohumanize.ai](https://gohumanize.ai/) |
 | Model weights and GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
-| Dataset, 3,257 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
+| Dataset, 2,883 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |
 | Write-up: every step, service and result | [docs/paper.md](https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md) |
 | Archived release, citable DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
@@ -92,16 +95,16 @@ Dataset licence: **CC-BY 4.0**. Please cite as:
 
 | | Train | Test |
 |---|---|---|
-| Rows | 2957 | 300 |
+| Rows | 2629 | 254 |
 | Book passages (fiction / non-fiction) | 2000 (1468 / 532) | 200 (142 / 58) |
-| Modern passages | 957 | 100 |
-| Books / articles | 47 / 532 | 47 / 59 |
-| Avg. input words | 196.6 | 199.4 |
-| Avg. output words | 177.7 | 179.1 |
+| Modern passages | 629 | 54 |
+| Books / articles | 47 / 332 | 47 / 30 |
+| Avg. input words | 184.3 | 181.1 |
+| Avg. output words | 170.5 | 168.3 |
 
 At most 46 passages per book in training, so no single author dominates. The book test passages
 come from the same books; they measure the transformation, not generalisation to unseen authors.
-The modern test passages come from 59 articles that never appear in training, so no test article
+The modern test passages come from 30 articles that never appear in training, so no test article
 has sibling passages the model has seen.
 
 ## Fields
@@ -171,7 +174,7 @@ explaining every step is in `docs/paper.md` there.
 
 ## Known limitations
 
-- Two thirds of the human prose is old (pre-1929) and the rest is government writing, so the
+- Three quarters of the human prose is old (pre-1929) and the rest is government writing, so the
   "human" style skews literary on one side and official on the other. Casual modern writing is
   not represented.
 - The agency sites change daily; re-running the collection gets different articles. This

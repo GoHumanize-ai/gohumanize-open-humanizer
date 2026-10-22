@@ -89,6 +89,9 @@ def main() -> int:
     ap.add_argument("--holdout-rows", type=int, default=100,
                     help="roughly how many grouped rows to hold out")
     ap.add_argument("--seed", type=int, default=13)
+    ap.add_argument("--rights-audit", type=Path, default=None,
+                    help="CSV of id,rights_assessment for the US federal rows; only rows assessed "
+                         "as having a public-domain basis are kept")
     args = ap.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
     prefixes = [p.strip() for p in args.prefixes.split(",") if p.strip()]
@@ -109,6 +112,16 @@ def main() -> int:
     if args.holdout_by:
         splits["train"], splits["test"] = hold_out_by_group(
             splits["train"], splits["test"], args.holdout_by, args.holdout_rows, args.seed)
+    if args.rights_audit:
+        # Applied after the split, so the rows that stay keep the train or test side they had.
+        # A federal row missing from the audit is dropped, not kept.
+        with args.rights_audit.open(encoding="utf-8") as f:
+            verified = {r["id"] for r in csv.DictReader(f)
+                        if r["rights_assessment"] == "Public-domain basis supported"}
+        for s in splits:
+            before = len(splits[s])
+            splits[s] = [r for r in splits[s] if r["source"] != "us-federal" or r["id"] in verified]
+            print(f"{s}: dropped {before - len(splits[s])} federal rows without a verified public-domain basis")
     bad = [(r["id"], artifacts(r["output"])) for s in splits.values() for r in s if artifacts(r["output"])]
     if bad:
         raise SystemExit(f"{len(bad)} targets still carry artifacts the model would learn to "
