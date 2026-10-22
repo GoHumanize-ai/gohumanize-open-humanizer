@@ -26,7 +26,7 @@ from importlib.metadata import PackageNotFoundError, version as _pkg_version
 try:  # the single source of truth is pyproject.toml
     __version__ = _pkg_version("gohumanize-open-humanizer")
 except PackageNotFoundError:  # running from a source checkout
-    __version__ = "0.1.12"
+    __version__ = "0.1.13"
 
 DEFAULT_URL = "https://gohumanize--gohumanize-open-humanizer-serve-serve.modal.run/v1"
 DEFAULT_MODEL = "gohumanize-open-humanizer"
