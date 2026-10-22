@@ -30,7 +30,7 @@ import requests
 
 API = "https://zenodo.org/api"
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "0.2.0"  # the research release: model and dataset version 2. The PyPI and npm clients
+VERSION = "0.3.0"  # the research release: model and dataset version 3. The PyPI and npm clients
                    # are versioned on their own and did not change for it.
 
 METADATA = {
@@ -41,12 +41,14 @@ METADATA = {
             "<p>The GoHumanize Open Humanizer is a public research and educational model: a Qwen3-4B "
             "fine-tune that rewrites AI-styled English prose into more natural human writing. "
             "This record archives the complete pipeline (sourcing and cleaning of public-domain text from "
-            "Project Gutenberg and US federal agencies, AI-fication of inputs with three generators, "
+            "Project Gutenberg and US federal agencies, AI-fication of inputs with two generators, "
             "training, evaluation, serving), the dataset of 2,957 training and 300 test pairs (CC-BY 4.0), "
             "the evaluation results and the paper-style write-up explaining every step and service used.</p>"
-            "<p>The published model is a full fine-tune of all four billion weights. On held-out modern "
-            "articles never seen in training it returns a passage nearly unchanged 17% of the time, and it "
-            "does not invent datelines, footnote numbers or links (write-up, section 6).</p>"
+            "<p>The published model is a full fine-tune of all four billion weights. Version 3 regenerates "
+            "the quarter of the AI-styled inputs that Llama 3.3 70B had written, using gpt-4o-mini and "
+            "DeepSeek-chat, so the model carries no Llama licence terms. It copies about as often as "
+            "version 2, loses fewer numbers and does not invent datelines, footnote numbers or links "
+            "(write-up, section 7).</p>"
             "<p><b>Links</b></p><ul>"
             "<li>Project page and browser demo: https://gohumanize.ai/open-model</li>"
             "<li>GoHumanize, the product this research comes from: https://gohumanize.ai/</li>"
@@ -57,7 +59,7 @@ METADATA = {
             "<li>Python client and CLI: https://pypi.org/project/gohumanize-open-humanizer/</li>"
             "<li>MCP server: https://www.npmjs.com/package/gohumanize-open-humanizer-mcp "
             "(source: https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp)</li>"
-            "<li>Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/na5tpdrj</li></ul>"
+            "<li>Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/vub8gt0w</li></ul>"
             "<p>The Open Humanizer is separate from the production models used by GoHumanize.ai and makes "
             "no claim about AI detectors.</p>"
         ),

@@ -24,7 +24,7 @@ from pathlib import Path
 import modal
 
 VOLUME_NAME = "gohumanize-open-humanizer-models"
-RUN_NAME = "open-humanizer-full-v5-s13"  # the published model (version 2 full fine-tune)
+RUN_NAME = "open-humanizer-full-v6-s13"  # the published model (version 3 full fine-tune)
 MODEL_DIR = f"/models/{RUN_NAME}/merged-16bit"
 SERVED_NAME = "gohumanize-open-humanizer"
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -48,7 +48,7 @@ def _dotenv(path: Path, keys: tuple[str, ...]) -> dict[str, str]:
     return out
 
 
-image = modal.Image.debian_slim(python_version="3.11").pip_install("vllm", "fastapi[standard]")
+image = modal.Image.debian_slim(python_version="3.11").pip_install("vllm==0.22.1", "fastapi[standard]")
 app = modal.App("gohumanize-open-humanizer-serve")
 volume = modal.Volume.from_name(VOLUME_NAME)
 secrets = [modal.Secret.from_dict(_dotenv(REPO_ROOT / ".env", ("OPEN_HUMANIZER_API_KEY",)))]

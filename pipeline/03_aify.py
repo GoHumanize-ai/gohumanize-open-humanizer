@@ -7,9 +7,9 @@ The rewrite becomes the model INPUT; the original human passage stays the
 TARGET. The fine-tuned model therefore learns the reverse direction:
 AI-styled prose -> the human original.
 
-Generators are mixed (OpenAI gpt-4o-mini, Meta Llama 3.3 70B and DeepSeek, with
-Gemini and Claude as optional extras) so the model does not learn the quirks of
-one model family. Several style prompts
+Generators are mixed (OpenAI gpt-4o-mini and DeepSeek, with Llama 3.3 70B, Gemini
+and Claude as optional extras) so the model does not learn the quirks of one model
+family. Several style prompts
 are rotated for the same reason. Results are cached per passage id, so the
 script can be re-run safely.
 
@@ -95,7 +95,9 @@ STYLES = {
 }
 
 # Gemini free tier allows 20 requests/day, so it is kept only as an optional generator.
-PROVIDER_WEIGHTS = {"openai": 0.5, "llama": 0.25, "deepseek": 0.25, "gemini": 0.0, "anthropic": 0.0}
+# Llama is off since version 3: its licence requires a model trained on Llama outputs to carry
+# "Llama" in its name, so the published dataset and model use OpenAI and DeepSeek only (2:1).
+PROVIDER_WEIGHTS = {"openai": 0.5, "llama": 0.0, "deepseek": 0.25, "gemini": 0.0, "anthropic": 0.0}
 MODELS = {"openai": "gpt-4o-mini", "gemini": "gemini-2.5-flash", "anthropic": "claude-haiku-4-5",
           "llama": "meta-llama/llama-3.3-70b-instruct", "deepseek": "deepseek-chat"}
 
@@ -233,6 +235,9 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=13)
     ap.add_argument("--limit", type=int, default=0, help="only process the first N rows (smoke test)")
     ap.add_argument("--only-provider", default="", help="force one provider (testing)")
+    ap.add_argument("--redo-generator", default="",
+                    help="regenerate only the cached rows written by this generator (a substring "
+                         "of its model name); every other row is left exactly as it is")
     ap.add_argument("--register", choices=("standard", "hard"), default="standard",
                     help="how far the AI-styled side is pushed from the original; use hard for "
                          "modern factual prose, which the standard register barely changes")
@@ -259,7 +264,15 @@ def main() -> int:
         for l in args.out.open(encoding="utf-8"):
             r = json.loads(l)
             done[r["id"]] = r
-    todo = [r for r in rows if r["id"] not in done]
+    if args.redo_generator:
+        redo = {i for i, r in done.items() if args.redo_generator in r["generator"]}
+        done = {i: r for i, r in done.items() if i not in redo}
+        with args.out.open("w", encoding="utf-8") as f:
+            for r in done.values():
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        todo = [r for r in rows if r["id"] in redo]
+    else:
+        todo = [r for r in rows if r["id"] not in done]
     log.info("%d rows, %d already done, %d to do", len(rows), len(done), len(todo))
 
     rng = random.Random(args.seed)

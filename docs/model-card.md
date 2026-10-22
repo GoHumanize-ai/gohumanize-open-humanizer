@@ -22,7 +22,8 @@ A small open model that rewrites AI-styled English prose into more natural human
 writing. It is a **full fine-tune of Qwen3-4B** (all four billion weights updated)
 on 2,957 pairs of (AI-styled passage, human original). The human side is
 public domain: 2,000 passages from books on Project Gutenberg and 957 passages of
-modern prose from US federal agencies.
+modern prose from US federal agencies. The AI-styled side was written by OpenAI
+gpt-4o-mini and DeepSeek-chat.
 
 The Open Humanizer is a public research and educational model created to
 demonstrate the general approach used to develop AI text humanization systems.
@@ -43,10 +44,14 @@ passages, three tries each at temperature 0.9:
 
 | | |
 |---|---|
-| Modern passages returned nearly unchanged (more than 90% of the words kept), from 59 articles never seen in training | 17.0% |
-| Book passages returned nearly unchanged | 13.3% |
-| Modern rewrites that lose a number | 28.5% |
+| Modern passages returned nearly unchanged (more than 90% of the words kept), from 59 articles never seen in training | 25.3% |
+| Book passages returned nearly unchanged | 17.5% |
+| Modern rewrites that lose a number | 18.3% |
 | Invented datelines, footnote numbers or links, of 900 outputs | 0 |
+
+The AI-styled test inputs were regenerated for version 3 and are milder rewrites than before,
+which leaves the model less to change. On the previous test set the same model returns 17.7% of
+modern and 12.8% of book passages nearly unchanged.
 
 The training pairs were built so the model learns to restructure sentences, not just swap
 words, and press-release datelines and footnote numbers were removed from the targets so
@@ -75,7 +80,7 @@ print(tok.decode(out[0][ids.shape[1]:], skip_special_tokens=True))
 ```
 
 On modern text, a single try still comes back nearly unchanged about one time in
-six. Generating a few tries and keeping the one that changed most (the MCP server
+four. Generating a few tries and keeping the one that changed most (the MCP server
 and Python client do this for you) takes that close to zero.
 
 Run it locally without a GPU using the GGUF builds in `gguf/`:
@@ -97,9 +102,9 @@ https://gohumanize.ai/open-model.
 | Data | 2,957 train / 300 test pairs, see the dataset card |
 | Loss | on the assistant (human target) tokens only |
 | Epochs, LR, batch | 2 epochs, 2e-5 cosine, effective batch 16, max 1,024 tokens, seed 13 |
-| Hardware | 1x NVIDIA H100 (80 GB) on Modal, 11 minutes of training |
-| Tracking | [Weights & Biases run](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/na5tpdrj) |
-| Final losses | train 1.02, eval 1.19 |
+| Hardware | 1x NVIDIA H100 (80 GB) on Modal, 10 minutes of training |
+| Tracking | [Weights & Biases run](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/vub8gt0w) |
+| Final losses | train 0.92, eval 1.10 |
 
 ## Evaluation
 
@@ -108,14 +113,14 @@ modern, 200 from books), against the human original.
 
 | Measure (300 held-out pairs) | AI-styled input | Base Qwen3-4B | **Open Humanizer** | Human target |
 |---|---|---|---|---|
-| BERTScore F1 vs human (higher = closer meaning) | 0.918 | 0.903 | **0.929** | |
-| ROUGE-L vs human (higher = closer wording) | 0.522 | 0.434 | **0.580** | |
-| Names/capitalised tokens kept (recall) | 0.601 | 0.610 | **0.652** | |
-| Length ratio vs human | 1.16 | 0.85 | **0.95** | 1.00 |
-| Contractions per 100 words | 0.33 | 0.69 | **0.08** | 0.16 |
-| Transition words per 100 words | 1.13 | 0.02 | **0.11** | 0.15 |
-| Stock LLM phrases per text | 0.70 | 0.01 | **0.03** | 0.02 |
-| Average sentence length (words) | 23.2 | 15.2 | **21.5** | 25.8 |
+| BERTScore F1 vs human (higher = closer meaning) | 0.925 | 0.907 | **0.935** | |
+| ROUGE-L vs human (higher = closer wording) | 0.560 | 0.454 | **0.616** | |
+| Names/capitalised tokens kept (recall) | 0.637 | 0.621 | **0.692** | |
+| Length ratio vs human | 1.11 | 0.84 | **0.97** | 1.00 |
+| Contractions per 100 words | 0.24 | 0.59 | **0.06** | 0.16 |
+| Transition words per 100 words | 0.97 | 0.02 | **0.09** | 0.15 |
+| Stock LLM phrases per text | 0.53 | 0.01 | **0.03** | 0.02 |
+| Average sentence length (words) | 22.9 | 15.3 | **22.6** | 25.8 |
 
 These measures cannot see whether the model rewrote at all: an output identical to the
 AI-styled input scores well on meaning and wording. That is why the rewrite rate above
@@ -129,7 +134,7 @@ target. They are not detector scores.
 - Two thirds of the human targets are pre-1929 books and the rest is US government
   writing, so the model leans literary on one side and official on the other.
   Casual modern writing is the gap.
-- About three in ten rewrites of number-heavy text lose at least one figure. Some of
+- About one in five rewrites of number-heavy text loses at least one figure. Some of
   that is rewording ("20 percent" as "a fifth"), some is loss. Check figures and
   other facts against the source.
 - Trained on 80 to 300 word passages; rewrite long documents paragraph by paragraph.
@@ -149,10 +154,10 @@ target. They are not detector scores.
 | Archived release, citable DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Python client and CLI | [pypi.org/project/gohumanize-open-humanizer](https://pypi.org/project/gohumanize-open-humanizer/) |
 | MCP server for AI assistants | [npm](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp) · [source](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) |
-| Training run, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/na5tpdrj) |
+| Training run, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/vub8gt0w) |
 
 ## Licence and citation
 
 Apache-2.0. Cite as:
 
-> GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.2.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
+> GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.3.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
