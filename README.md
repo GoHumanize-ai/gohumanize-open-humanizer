@@ -21,7 +21,7 @@ that explains every step and every service used.
 | Write-up (paper) | [`docs/paper.md`](docs/paper.md) |
 | Model weights and GGUF | [huggingface.co/gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Model card | [`docs/model-card.md`](docs/model-card.md) |
-| Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), card and files in [`dataset/`](dataset/) (2,629 train / 254 test, CC-BY 4.0) |
+| Dataset | [huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset), also on [Kaggle](https://www.kaggle.com/datasets/gohumanize/gohumanize-open-humanizer-dataset); card and files in [`dataset/`](dataset/) (2,629 train / 254 test, CC-BY 4.0) |
 | Archived release, DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Evaluation results | [`eval/results/`](eval/results/) |
 | Training runs | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer) |

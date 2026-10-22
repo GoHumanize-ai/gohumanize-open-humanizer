@@ -55,6 +55,7 @@ METADATA = {
             "<li>GoHumanize, the product this research comes from: https://gohumanize.ai/</li>"
             "<li>Model weights and GGUF builds: https://huggingface.co/gohumanize/gohumanize-open-humanizer</li>"
             "<li>Dataset (CC-BY 4.0): https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset</li>"
+            "<li>Dataset on Kaggle: https://www.kaggle.com/datasets/gohumanize/gohumanize-open-humanizer-dataset</li>"
             "<li>Code, pipeline and write-up: https://github.com/GoHumanize-ai/gohumanize-open-humanizer</li>"
             "<li>Paper: https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md</li>"
             "<li>Python client and CLI: https://pypi.org/project/gohumanize-open-humanizer/</li>"
@@ -73,6 +74,7 @@ METADATA = {
             {"identifier": "https://github.com/GoHumanize-ai/gohumanize-open-humanizer", "relation": "isSupplementTo", "scheme": "url"},
             {"identifier": "https://huggingface.co/gohumanize/gohumanize-open-humanizer", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset", "relation": "isSupplementedBy", "scheme": "url"},
+            {"identifier": "https://www.kaggle.com/datasets/gohumanize/gohumanize-open-humanizer-dataset", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://gohumanize.ai/open-model", "relation": "isDescribedBy", "scheme": "url"},
             {"identifier": "https://pypi.org/project/gohumanize-open-humanizer/", "relation": "isSupplementedBy", "scheme": "url"},
             {"identifier": "https://www.npmjs.com/package/gohumanize-open-humanizer-mcp", "relation": "isSupplementedBy", "scheme": "url"},
