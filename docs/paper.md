@@ -1,10 +1,10 @@
 # GoHumanize Open Humanizer: building a small text-humanization model from public-domain data
 
-*GoHumanize team, September 2026; version 3 October 2026*
+*GoHumanize team, September 2026; versions 3 and 4 October 2026*
 
 ## Abstract
 
-We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B in two ways: with QLoRA, in 22 minutes on a single rented 24 GB GPU for about one dollar, and as a full fine-tune of all four billion weights on an 80 GB GPU. The two score the same. The full fine-tune, which reached the lowest held-out loss, is the published model; the QLoRA version is released alongside it as the cheaper recipe to reproduce. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. Version 2 (section 6) adds 957 pairs of modern prose from US federal agencies, which is also public domain, after we found that version 1 often returned modern text almost unchanged; the fix turned out to be in how the AI-styled side is generated, not in where the human side comes from, and it cut that rate from 38% to 17%. A QLoRA build trained on the same data copies less still, about 6%, which corrects our earlier finding that the two methods are level (section 6.9). Version 3 (section 7) regenerates every AI-styled input that Llama 3.3 70B had written, about a quarter, with the other two generators, so the model carries no Llama licence terms; it copies about as often as version 2 and loses fewer numbers. The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
+We describe, end to end, how we built a small open model that rewrites AI-styled English prose into more natural human writing. The human side of every training example comes from public-domain books on Project Gutenberg; the AI side was produced by asking three large language models to rewrite those passages in their own characteristic register. From 2,000 such pairs we fine-tuned Qwen3-4B in two ways: with QLoRA, in 22 minutes on a single rented 24 GB GPU for about one dollar, and as a full fine-tune of all four billion weights on an 80 GB GPU. The two score the same. The full fine-tune, which reached the lowest held-out loss, is the published model; the QLoRA version is released alongside it as the cheaper recipe to reproduce. We explain each step, each service we used and why, how we evaluated the result against the untouched base model, and what the model can and cannot do. Version 2 (section 6) adds 957 pairs of modern prose from US federal agencies, which is also public domain, after we found that version 1 often returned modern text almost unchanged; the fix turned out to be in how the AI-styled side is generated, not in where the human side comes from, and it cut that rate from 38% to 17%. A QLoRA build trained on the same data copies less still, about 6%, which corrects our earlier finding that the two methods are level (section 6.9). Version 3 (section 7) regenerates every AI-styled input that Llama 3.3 70B had written, about a quarter, with the other two generators, so the model carries no Llama licence terms; it copies about as often as version 2 and loses fewer numbers. Version 4 keeps only the federal passages whose source page has a verified public-domain basis, dropping NASA and part of NIST. The model, dataset, code and this document are published under open licences so that developers and researchers can study, reproduce and extend the work. The Open Humanizer is an educational release: it is separate from the production systems of GoHumanize.ai and it makes no claim about AI detectors.
 
 ## 1. Purpose and scope
 
@@ -434,15 +434,15 @@ The same gap was already there in version 1 (QLoRA 20%, full fine-tune 38%), whe
 
 **Which one we publish.** The version 2 full fine-tune was chosen as the published model before this comparison was run, and it remains the published model: it fixes most of the copying (38% to 17%) and does not invent datelines or footnote numbers. The QLoRA build is the stronger model on this one measure and can be reproduced with the last command of section 11; its record is `train/runs/open-humanizer-qlora-v5-s13.json` and its W&B runs are `a31xq89m` (seed 13) and `opfu2cwb` (seed 29). For your own project the advice of section 5.4 stands, now with more reason: start with QLoRA, and measure the behaviour you care about before paying for a full fine-tune.
 
-## 7. Version 3: inputs without Llama
+## 7. Versions 3 and 4: cleaner licences
 
 *Added 22 October 2026.*
 
-### 7.1 Why
+### 7.1 Version 3: why remove Llama
 
 About a quarter of the version 2 inputs were written by Llama 3.3 70B. Its licence asks that a model trained on Llama outputs and made available carry "Llama" at the start of its name. Rather than rename the model, we removed Llama from the data.
 
-### 7.2 What changed
+### 7.2 Version 3: what changed
 
 `03_aify.py` gained a `--redo-generator` option that regenerates only the cached rows written by one generator and leaves every other row exactly as it was. All 785 Llama rows (504 book and 230 modern training rows, 27 book and 24 modern test rows) were written again by gpt-4o-mini and DeepSeek-chat, with Llama's weight set to zero so the other two keep their 2:1 ratio. None failed. The passages, the splits and every other row are unchanged:
 
@@ -453,7 +453,7 @@ About a quarter of the version 2 inputs were written by Llama 3.3 70B. Its licen
 
 Llama had rewritten the books more heavily than the other two: the share of words shared by a book input and its target rose from 0.42 to 0.46. The model was trained again with the version 2 recipe unchanged (full fine-tune, learning rate 2e-5, seed 13, 10 minutes on one H100; training loss 0.92, held-out loss 1.10; W&B run `vub8gt0w`, record `train/runs/open-humanizer-full-v6-s13.json`).
 
-### 7.3 Results
+### 7.3 Version 3: results
 
 The copy test of section 6.8, through the same vLLM version the demo runs (0.22.1). Each model was run on the version 3 test set and the version 3 model also on the version 2 test set:
 
@@ -479,10 +479,45 @@ On either test set the two versions copy about equally often, and version 3 lose
 
 **A note on measuring.** The copy test first ran on vLLM 0.30, picked up by an unpinned image rebuild, and measured the version 2 model at 0.7% near-copies on modern text instead of 17%. Pinned back to 0.22.1 it gave 17.0% again. Sampling results can change between vLLM versions, so the engine version is now pinned in both the copy test and the endpoint, and copy rates are only compared when measured on the same one.
 
+### 7.4 Version 4: only federal text with a verified public-domain basis
+
+Works of the US federal government carry no copyright, but an agency website also publishes text that is not such a work: articles by outside authors, newsletters reused with permission, pages with their own terms. Version 2 relied on the agency as the source. For version 4 every one of the 591 source pages behind the 1,057 federal passages was checked for a public-domain basis, meaning a federal-employee author or an agency statement that the text is public domain, and for any notice to the contrary. The verdict for each passage is in `dataset/federal-rights-audit.csv`:
+
+| Agency | Passages | Verified | Dropped |
+|---|---|---|---|
+| Federal Reserve | 378 | 378 | 0 |
+| NIST | 438 | 291 | 147: the site permits copying, but federal authorship was not established |
+| Department of Energy | 14 | 14 | 0 |
+| NASA | 227 | 0 | 227: public-domain status not established for 224, outside author with separate terms for 2, page gone for 1 |
+
+`04_build_dataset.py --rights-audit` keeps only the verified passages. It filters after the train and test split, so every remaining row is identical to version 3 and stays on its side. The dataset is now 2,629 training pairs (2,000 book, 629 modern from 332 articles) and 254 test pairs (200 book, 54 modern from 30 articles). The model was trained again with the same recipe (8 minutes; training loss 0.99, held-out loss 1.19, flat through the second epoch; W&B run `d326rxss`, record `train/runs/open-humanizer-full-v7-s13.json`).
+
+On the version 4 test set, through vLLM 0.22.1:
+
+| | Version 3 | **Version 4** |
+|---|---|---|
+| Modern passages returned as a near-copy (162 outputs) | 24.7% | **29.0%** |
+| Book passages returned as a near-copy | 18.0% | **19.2%** |
+| Modern rewrites that lose a number | 25.9% | **22.1%** |
+| Invented datelines, footnote numbers or links, of 762 outputs | 0 | **0** |
+
+The two are close. Version 4 copies modern text slightly more often, which fits a third fewer modern training passages, but the gap is seven outputs out of 162. The standard measures on the same 254 passages:
+
+| Measure | AI-styled input | Base Qwen3-4B | **Version 4** | Human |
+|---|---|---|---|---|
+| BERTScore F1 vs human | 0.923 | 0.905 | **0.931** | |
+| ROUGE-L vs human | 0.542 | 0.444 | **0.595** | |
+| Names kept (recall) | 0.619 | 0.604 | **0.673** | |
+| Length ratio vs human | 1.08 | 0.83 | **0.97** | 1.00 |
+| Contractions per 100 words | 0.20 | 0.62 | **0.05** | 0.14 |
+| Transition words per 100 words | 0.88 | 0.02 | **0.12** | 0.16 |
+| Stock LLM phrases per text | 0.40 | 0.00 | **0.02** | 0.01 |
+| Average sentence length | 22.6 | 15.2 | **22.6** | 26.7 |
+
 ## 8. Serving and integration
 
-- **Weights** are on Hugging Face: the version 3 full fine-tune as 16-bit safetensors plus GGUF files (Q4_K_M and Q8_0) built with llama.cpp, so the model runs locally in Ollama, LM Studio or llama.cpp. Earlier versions stay in the repository history. The version 1 QLoRA, with its adapter and its own GGUF files, is in a second repository.
-- **Endpoint model**: the hosted demo serves the version 3 full fine-tune.
+- **Weights** are on Hugging Face: the version 4 full fine-tune as 16-bit safetensors plus GGUF files (Q4_K_M and Q8_0) built with llama.cpp, so the model runs locally in Ollama, LM Studio or llama.cpp. Earlier versions stay in the repository history. The version 1 QLoRA, with its adapter and its own GGUF files, is in a second repository.
+- **Endpoint model**: the hosted demo serves the version 4 full fine-tune.
 - **Several rewrites, best one returned**: the demo, the MCP server and the Python client ask for a few rewrites in one request and return the one that changed the text most while keeping a sensible length (section 6.1). Set the number of samples to 1 for a single, cheaper request.
 - **Endpoint**: `serve/modal_serve.py` runs vLLM on Modal behind an OpenAI-compatible API (`/v1/chat/completions`). The container scales to zero when idle, so the demo costs nothing while unused and roughly one A10G-hour per hour of use.
 - **MCP server** (`npx gohumanize-open-humanizer-mcp`) exposes a `humanize_text` tool to AI assistants. It calls the endpoint above by default, or any OpenAI-compatible server you point it at, including a local Ollama running the GGUF.
@@ -494,7 +529,7 @@ On either test set the two versions copy about equally often, and version 3 lose
 | Service | Role | Why this one |
 |---|---|---|
 | Project Gutenberg | Human text (books) | Large, free, clearly public domain, direct downloads. |
-| NASA, Federal Reserve, NIST, Department of Energy | Human text (modern, version 2) | Works of the US federal government carry no copyright in the United States, so this is modern prose that can be redistributed. |
+| Federal Reserve, NIST, Department of Energy | Human text (modern, from version 2; NASA too in versions 2 and 3) | Works of the US federal government carry no copyright in the United States, so this is modern prose that can be redistributed. |
 | OpenAI gpt-4o-mini, DeepSeek-chat | AI-fication | Two model families from two labs, so the humanizer learns LLM style in general rather than one model's habits (versions 1 and 2 also used Meta Llama 3.3 70B, section 7); all cheap at this volume (about $1 in total). |
 | Qwen3-4B (Qwen team, Alibaba) | Base model | Open weights under Apache-2.0, strong for its size, small enough to train for a dollar and run on a laptop (section 4.1). |
 | Unsloth, TRL, vLLM | Training and serving libraries | Unsloth makes QLoRA fast and memory-efficient; TRL provides the supervised fine-tuning loop; vLLM serves the model behind an OpenAI-compatible API. |
@@ -508,9 +543,9 @@ On either test set the two versions copy about equally often, and version 3 lose
 
 ## 10. Limitations
 
-- **Old and institutional prose.** Two thirds of the human targets are pre-1929 books and the rest is US government writing, so the model's idea of "human" leans literary on one side and official on the other. Casual modern writing is the gap; it is almost never available with a clean licence.
-- **Small data, small model.** About 3,000 pairs and a 4B model are enough to learn the style shift, not to handle every domain. Version 3 still returns about one modern passage in four nearly unchanged on a single try; the clients' several-rewrites option covers most of the rest.
-- **Numbers.** About one in five rewrites of number-heavy text loses at least one figure in version 3, and about three in ten did in versions 1 and 2. Some of that is harmless rewording ("20 percent" as "a fifth"), some is loss. Check figures against the source.
+- **Old and institutional prose.** Three quarters of the human targets are pre-1929 books and the rest is US government writing, so the model's idea of "human" leans literary on one side and official on the other. Casual modern writing is the gap; it is almost never available with a clean licence.
+- **Small data, small model.** About 3,000 pairs and a 4B model are enough to learn the style shift, not to handle every domain. Version 4 still returns about three modern passages in ten nearly unchanged on a single try; the clients' several-rewrites option covers most of the rest.
+- **Numbers.** About one in five rewrites of number-heavy text loses at least one figure in versions 3 and 4, and about three in ten did in versions 1 and 2. Some of that is harmless rewording ("20 percent" as "a fifth"), some is loss. Check figures against the source.
 - **Faithfulness is not guaranteed.** Like any rewriting model it can drop or alter details; outputs should be checked against the source.
 - **English only; passage-length inputs.** Trained on 80 to 300 word passages; longer texts should be processed paragraph by paragraph (the MCP server and Python client do this).
 - **No detector evaluation**, by design.
@@ -560,6 +595,15 @@ modal run eval/modal_eval.py --run-name open-humanizer-full-v6-s13 --max-rows 30
 modal run --detach eval/modal_copy_rate.py --runs open-humanizer-full-v5-s13,open-humanizer-full-v6-s13
 ```
 
+Version 4 builds from the same pairs with the rights audit applied:
+
+```bash
+python pipeline/04_build_dataset.py --pairs-dir data --prefixes pairs,pairs_modernh --holdout-by url --rights-audit dataset/federal-rights-audit.csv --out-dir dataset
+modal run --detach train/modal_train.py --method full --learning-rate 2e-5 --seed 13 --run-name open-humanizer-full-v7-s13
+modal run eval/modal_eval.py --run-name open-humanizer-full-v7-s13 --max-rows 300
+modal run --detach eval/modal_copy_rate.py --runs open-humanizer-full-v6-s13,open-humanizer-full-v7-s13
+```
+
 The agency sites change daily, so a re-run collects different articles; the released dataset is the fixed record of the one we used. `--detach` keeps a long training run alive if your terminal loses its connection.
 
 Total cost of one full reproduction: under $10. Total time: about three hours including waiting.
@@ -570,18 +614,18 @@ Total cost of one full reproduction: under $10. Total time: about three hours in
 | --- | --- |
 | Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | GoHumanize (the product this research comes from) | [gohumanize.ai](https://gohumanize.ai/) |
-| Model weights and GGUF builds (version 3 full fine-tune) | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
+| Model weights and GGUF builds (version 4 full fine-tune) | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
 | Version 1 QLoRA and LoRA adapter | [gohumanize/gohumanize-open-humanizer-qlora](https://huggingface.co/gohumanize/gohumanize-open-humanizer-qlora) |
-| Dataset, 3,257 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
+| Dataset, 2,883 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |
 | Write-up: every step, service and result | [docs/paper.md](https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md) |
 | Archived release, citable DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |
 | Python client and CLI | [pypi.org/project/gohumanize-open-humanizer](https://pypi.org/project/gohumanize-open-humanizer/) |
 | MCP server for AI assistants | [npm](https://www.npmjs.com/package/gohumanize-open-humanizer-mcp) · [source](https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp) |
-| Training runs, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer) (version 3 `vub8gt0w`; version 2 `na5tpdrj`; version 1 full fine-tune `khrhh8sl`, QLoRA `95wi8tdg`) |
+| Training runs, loss curves and config | [Weights & Biases](https://wandb.ai/gohumanize/gohumanize-open-humanizer) (version 4 `d326rxss`; version 3 `vub8gt0w`; version 2 `na5tpdrj`; version 1 full fine-tune `khrhh8sl`, QLoRA `95wi8tdg`) |
 
 ## Citation
 
-GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.3.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
+GoHumanize team (2026). *GoHumanize Open Humanizer: an open text-humanization model, dataset and pipeline built from public-domain data.* Version 0.4.0. Zenodo. https://doi.org/10.5281/zenodo.22843083
 
 Licences: model and code Apache-2.0; dataset CC-BY 4.0.

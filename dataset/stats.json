@@ -1,56 +1,56 @@
 {
   "splits": {
     "train": {
-      "rows": 2957,
+      "rows": 2629,
       "books": 47,
-      "articles": 532,
+      "articles": 332,
       "source": {
-        "us-federal": 957,
+        "us-federal": 629,
         "gutenberg": 2000
       },
       "category": {
-        "modern": 957,
+        "modern": 629,
         "nonfiction": 532,
         "fiction": 1468
       },
       "generator": {
-        "deepseek-chat": 953,
-        "gpt-4o-mini": 2004
+        "deepseek-chat": 846,
+        "gpt-4o-mini": 1783
       },
       "style": {
-        "hedged_helpful": 741,
-        "formal_polished": 733,
-        "corporate_clean": 726,
-        "explanatory": 757
+        "hedged_helpful": 660,
+        "formal_polished": 645,
+        "corporate_clean": 649,
+        "explanatory": 675
       },
-      "avg_input_words": 196.6,
-      "avg_output_words": 177.7
+      "avg_input_words": 184.3,
+      "avg_output_words": 170.5
     },
     "test": {
-      "rows": 300,
+      "rows": 254,
       "books": 47,
-      "articles": 59,
+      "articles": 30,
       "source": {
-        "us-federal": 100,
+        "us-federal": 54,
         "gutenberg": 200
       },
       "category": {
-        "modern": 100,
+        "modern": 54,
         "nonfiction": 58,
         "fiction": 142
       },
       "generator": {
-        "gpt-4o-mini": 233,
-        "deepseek-chat": 67
+        "gpt-4o-mini": 204,
+        "deepseek-chat": 50
       },
       "style": {
-        "formal_polished": 73,
-        "hedged_helpful": 77,
-        "explanatory": 78,
-        "corporate_clean": 72
+        "formal_polished": 66,
+        "hedged_helpful": 67,
+        "explanatory": 62,
+        "corporate_clean": 59
       },
-      "avg_input_words": 199.4,
-      "avg_output_words": 179.1
+      "avg_input_words": 181.1,
+      "avg_output_words": 168.3
     }
   },
   "books": [
@@ -394,12 +394,8 @@
       "train_rows": 350
     },
     {
-      "agency": "NASA",
-      "train_rows": 198
-    },
-    {
       "agency": "National Institute of Standards and Technology",
-      "train_rows": 398
+      "train_rows": 268
     }
   ]
 }

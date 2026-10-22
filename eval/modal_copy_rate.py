@@ -15,7 +15,7 @@ setting) through vLLM (the demo's engine). Per output it records:
 
 Run (the models must be on the Modal volume):
     DATASET_DIR=dataset modal run --detach eval/modal_copy_rate.py \\
-        --runs open-humanizer-full-v6-s13,open-humanizer-full-v5-s13
+        --runs open-humanizer-full-v7-s13,open-humanizer-full-v6-s13
 Writes eval/results/copy-rate/<runs>.json with the summary per model.
 """
 

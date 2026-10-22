@@ -7,7 +7,7 @@
 
 Python client and CLI for the **GoHumanize Open Humanizer**, an open Qwen3-4B
 fine-tune (Apache-2.0) that rewrites AI-styled English text into more natural
-human prose. Trained on 2,957 pairs built from public-domain books and modern US government writing.
+human prose. Trained on 2,629 pairs built from public-domain books and modern US government writing.
 
 ```bash
 pip install gohumanize-open-humanizer
@@ -62,7 +62,7 @@ open-humanizer --samples 1 "It is worth noting that ..."
 | Project page and browser demo | [gohumanize.ai/open-model](https://gohumanize.ai/open-model) |
 | GoHumanize (the product this research comes from) | [gohumanize.ai](https://gohumanize.ai/) |
 | Model weights and GGUF builds | [gohumanize/gohumanize-open-humanizer](https://huggingface.co/gohumanize/gohumanize-open-humanizer) |
-| Dataset, 3,257 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
+| Dataset, 2,883 pairs (CC-BY 4.0) | [gohumanize/gohumanize-open-humanizer-dataset](https://huggingface.co/datasets/gohumanize/gohumanize-open-humanizer-dataset) |
 | Code and full pipeline | [GoHumanize-ai/gohumanize-open-humanizer](https://github.com/GoHumanize-ai/gohumanize-open-humanizer) |
 | Write-up: every step, service and result | [docs/paper.md](https://github.com/GoHumanize-ai/gohumanize-open-humanizer/blob/main/docs/paper.md) |
 | Archived release, citable DOI | [10.5281/zenodo.22843083](https://doi.org/10.5281/zenodo.22843083) |

@@ -30,7 +30,7 @@ import requests
 
 API = "https://zenodo.org/api"
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "0.3.0"  # the research release: model and dataset version 3. The PyPI and npm clients
+VERSION = "0.4.0"  # the research release: model and dataset version 4. The PyPI and npm clients
                    # are versioned on their own and did not change for it.
 
 METADATA = {
@@ -42,13 +42,14 @@ METADATA = {
             "fine-tune that rewrites AI-styled English prose into more natural human writing. "
             "This record archives the complete pipeline (sourcing and cleaning of public-domain text from "
             "Project Gutenberg and US federal agencies, AI-fication of inputs with two generators, "
-            "training, evaluation, serving), the dataset of 2,957 training and 300 test pairs (CC-BY 4.0), "
+            "training, evaluation, serving), the dataset of 2,629 training and 254 test pairs (CC-BY 4.0), "
             "the evaluation results and the paper-style write-up explaining every step and service used.</p>"
-            "<p>The published model is a full fine-tune of all four billion weights. Version 3 regenerates "
-            "the quarter of the AI-styled inputs that Llama 3.3 70B had written, using gpt-4o-mini and "
-            "DeepSeek-chat, so the model carries no Llama licence terms. It copies about as often as "
-            "version 2, loses fewer numbers and does not invent datelines, footnote numbers or links "
-            "(write-up, section 7).</p>"
+            "<p>The published model is a full fine-tune of all four billion weights. Its human text is "
+            "public domain in the United States: pre-1929 books from Project Gutenberg, and passages from "
+            "the Federal Reserve, NIST and the Department of Energy whose source pages were checked one by "
+            "one for a public-domain basis (dataset/federal-rights-audit.csv). The AI-styled inputs were "
+            "written by gpt-4o-mini and DeepSeek-chat. The model does not invent datelines, footnote "
+            "numbers or links (write-up, section 7).</p>"
             "<p><b>Links</b></p><ul>"
             "<li>Project page and browser demo: https://gohumanize.ai/open-model</li>"
             "<li>GoHumanize, the product this research comes from: https://gohumanize.ai/</li>"
@@ -59,7 +60,7 @@ METADATA = {
             "<li>Python client and CLI: https://pypi.org/project/gohumanize-open-humanizer/</li>"
             "<li>MCP server: https://www.npmjs.com/package/gohumanize-open-humanizer-mcp "
             "(source: https://github.com/GoHumanize-ai/gohumanize-open-humanizer-mcp)</li>"
-            "<li>Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/vub8gt0w</li></ul>"
+            "<li>Training run: https://wandb.ai/gohumanize/gohumanize-open-humanizer/runs/d326rxss</li></ul>"
             "<p>The Open Humanizer is separate from the production models used by GoHumanize.ai and makes "
             "no claim about AI detectors.</p>"
         ),
@@ -123,7 +124,8 @@ def upload_all(tok: str, dep: dict) -> None:
     bucket = dep["links"]["bucket"]
     with tempfile.TemporaryDirectory() as tmp:
         files = [snapshot_zip(Path(tmp)), ROOT / "docs" / "paper.md", ROOT / "dataset" / "train.jsonl",
-                 ROOT / "dataset" / "test.jsonl", ROOT / "dataset" / "README.md"]
+                 ROOT / "dataset" / "test.jsonl", ROOT / "dataset" / "README.md",
+                 ROOT / "dataset" / "federal-rights-audit.csv"]
         for f in files:
             name = f.name if f.parent.name != "dataset" else f"dataset-{f.name}"
             _call("PUT", f"{bucket}/{name}", path=f, headers=h, timeout=600).raise_for_status()
